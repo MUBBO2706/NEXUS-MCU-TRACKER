@@ -94,11 +94,8 @@ app.use(express.urlencoded({ limit: "15mb", extended: true }));
 
 export default app;
 
-async function startServer() {
-  const PORT = 3000;
-
-  // Check Telegram database connection configuration status
-  app.get("/api/auth/status", (req, res) => {
+// Check Telegram database connection configuration status
+app.get("/api/auth/status", (req, res) => {
     try {
       const config = telegramDb.getTelegramConfig();
       res.json({
@@ -1214,6 +1211,9 @@ Last Updated: ${lastUpdatedIst}
       </svg>
     `);
   });
+
+async function startServer() {
+  const PORT = 3000;
 
   // 2. Vite middleware setup based on environment
   if (process.env.NODE_ENV !== "production") {
