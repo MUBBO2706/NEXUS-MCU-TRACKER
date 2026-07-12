@@ -1,0 +1,187 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --color-marvel: #e62429;
+
+  /* Cleaner, sharper, subtle border-radius mapping */
+  --radius-3xl: 10px;
+  --radius-2xl: 8px;
+  --radius-xl: 6px;
+  --radius-lg: 4px;
+  --radius-md: 3px;
+  --radius-sm: 2px;
+}
+
+/* Custom CSS Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #000;
+}
+::-webkit-scrollbar-thumb {
+  background: #e62429;
+  border-radius: 4px;
+}
+
+/* Thin Scrollbar specific styling for table horizontal scrollbar */
+.thin-scrollbar::-webkit-scrollbar {
+  height: 3px;
+  width: 3px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(230, 36, 41, 0.45);
+  border-radius: 99px;
+  transition: background 0.2s ease;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(230, 36, 41, 0.85);
+}
+
+/* Theme overrides for thin scrollbar */
+.theme-cosmic .thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.45);
+}
+.theme-cosmic .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.85);
+}
+
+.theme-asgardian .thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.45);
+}
+.theme-asgardian .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.85);
+}
+
+/* Hide scrollbar for Chrome, Safari, Opera and Firefox */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Safe area & custom utility presets */
+body {
+  font-family: var(--font-sans);
+  background-color: #000000;
+  color: #f3f4f6;
+  overscroll-behavior-y: contain;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Pulsing effect for glowing active widgets */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(230, 36, 41, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(230, 36, 41, 0.8);
+  }
+}
+
+/* Smooth, slow 3D rotation animation for Infinity Stones */
+@keyframes rotate3dSlow {
+  0% {
+    transform: rotateY(0deg) rotateX(8deg);
+  }
+  50% {
+    transform: rotateY(180deg) rotateX(-8deg);
+  }
+  100% {
+    transform: rotateY(360deg) rotateX(8deg);
+  }
+}
+
+.animate-rotate-3d {
+  animation: rotate3dSlow 12s linear infinite;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.pulse-red-glow {
+  animation: pulseGlow 2.5s infinite;
+}
+
+/* Glassmorphism utility card border styles */
+.glass-card {
+  background: rgba(8, 8, 8, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.glass-card-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-hover:hover {
+  transform: translateY(-4px);
+  background: rgba(25, 29, 44, 0.8);
+  border-color: rgba(230, 36, 41, 0.4);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.7);
+}
+
+/* Confetti animation */
+@keyframes confettiFall {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+}
+
+.confetti-particle {
+  position: fixed;
+  z-index: 1000;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  animation: confettiFall 4s linear forwards;
+}
+
+/* Smooth active tab indicator bubble styling */
+.active-nav-bubble {
+  position: relative;
+}
+.active-nav-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 4px;
+  background-color: #e62429;
+  border-radius: 99px;
+  box-shadow: 0 0 8px #e62429;
+}
+
+/* Fluid responsive text scaling for short contents to prevent wrapping */
+.text-scale-single {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(10px, 2vw, 13px);
+}
+
+.text-scale-stat {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(16px, 3.2vw, 24px);
+}
+
+.text-scale-badge {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(8px, 1.5vw, 10px);
+}
+
