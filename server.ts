@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import * as telegramDb from "./backend/telegramDb.js";
 import crypto from "crypto";
 import { MCU_TITLES } from "./src/data/mcuData.js";
@@ -1251,6 +1250,9 @@ async function startServer() {
 
   // 2. Vite middleware setup based on environment
   if (process.env.NODE_ENV !== "production") {
+    // Obscure dynamic import to prevent Vercel from bundling Vite in serverless functions
+    const viteModuleName = "vite";
+    const { createServer: createViteServer } = await import(/* @vite-ignore */ viteModuleName);
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
