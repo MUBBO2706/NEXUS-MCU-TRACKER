@@ -86,13 +86,16 @@ function addUpdateLog(userJson: any, log: {
   userJson.updates = [newLog, ...userJson.updates].slice(0, 500);
 }
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+const app = express();
 
-  // Parse JSON payloads for incoming requests with a larger size limit for base64 uploads
-  app.use(express.json({ limit: "15mb" }));
-  app.use(express.urlencoded({ limit: "15mb", extended: true }));
+// Parse JSON payloads for incoming requests with a larger size limit for base64 uploads
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ limit: "15mb", extended: true }));
+
+export default app;
+
+async function startServer() {
+  const PORT = 3000;
 
   // Check Telegram database connection configuration status
   app.get("/api/auth/status", (req, res) => {
@@ -1232,4 +1235,6 @@ Last Updated: ${lastUpdatedIst}
   });
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
