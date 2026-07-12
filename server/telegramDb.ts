@@ -175,10 +175,10 @@ export function parseUserAgent(userAgentString: string | undefined): { browser: 
 
 // Lazy configurations and validation
 export function getTelegramConfig() {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  const authChannelId = process.env.TELEGRAM_AUTH_CHANNEL_ID || chatId;
-  const storageChannelId = process.env.TELEGRAM_STORAGE_CHANNEL_ID || chatId;
+  const token = process.env.TELEGRAM_BOT_TOKEN || process.env.STORAGE_ACCESS_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID || process.env.STORAGE_CHAT_ID;
+  const authChannelId = process.env.TELEGRAM_AUTH_CHANNEL_ID || process.env.STORAGE_AUTH_CHANNEL_ID || chatId;
+  const storageChannelId = process.env.TELEGRAM_STORAGE_CHANNEL_ID || process.env.STORAGE_STORAGE_CHANNEL_ID || chatId;
 
   if (!token || (!chatId && !authChannelId && !storageChannelId)) {
     throw new Error("TELEGRAM_NOT_CONFIGURED");

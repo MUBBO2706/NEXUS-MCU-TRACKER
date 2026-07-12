@@ -73,7 +73,14 @@ export default function App() {
       try {
         // 1. Check configuration
         const statusRes = await fetch('/api/auth/status');
-        const statusData = await statusRes.json();
+        const statusText = await statusRes.text();
+        let statusData;
+        try {
+          statusData = JSON.parse(statusText);
+        } catch (e) {
+          console.warn('Backend status response not JSON:', statusText);
+          statusData = { configured: false };
+        }
         setTelegramConfigured(!!statusData.configured);
 
         // 2. Validate token if present
@@ -84,7 +91,15 @@ export default function App() {
             }
           });
           if (verifyRes.ok) {
-            const verifyData = await verifyRes.json();
+            const verifyText = await verifyRes.text();
+            let verifyData;
+            try {
+              verifyData = JSON.parse(verifyText);
+            } catch (e) {
+              console.warn('Backend auth/me response not JSON:', verifyText);
+              handleLogoutQuietly();
+              return;
+            }
             if (verifyData.success && verifyData.user) {
               setUser(verifyData.user);
               setIsOfflineSandbox(false);
@@ -177,7 +192,17 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: usernameInput, password: passwordInput }),
       });
-      const data = await res.json();
+      
+      const responseText = await res.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Non-JSON login response:", responseText);
+        setAuthError(`Server error (${res.status}): Please check backend configuration or logs.`);
+        return;
+      }
+
       if (res.ok && data.success) {
         localStorage.setItem('mcu_auth_token', data.token);
         setAuthToken(data.token);
@@ -211,7 +236,8 @@ export default function App() {
         setAuthError(data.error || 'Authentication failed. Please check credentials.');
       }
     } catch (err: any) {
-      setAuthError('Unable to contact the authorization server. Please try again.');
+      console.error("Login connection error:", err);
+      setAuthError(`Unable to contact the authorization server: ${err.message || 'Please try again.'}`);
     }
   };
 
@@ -256,7 +282,17 @@ export default function App() {
           initialData
         }),
       });
-      const data = await res.json();
+
+      const responseText = await res.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Non-JSON register response:", responseText);
+        setAuthError(`Server error (${res.status}): Please check backend configuration or logs.`);
+        return;
+      }
+
       if (res.ok && data.success) {
         localStorage.setItem('mcu_auth_token', data.token);
         setAuthToken(data.token);
@@ -294,7 +330,8 @@ export default function App() {
         setAuthError(data.error || 'Registration failed.');
       }
     } catch (err: any) {
-      setAuthError('Unable to contact the registration server. Please try again.');
+      console.error("Register connection error:", err);
+      setAuthError(`Unable to contact the registration server: ${err.message || 'Please try again.'}`);
     }
   };
 

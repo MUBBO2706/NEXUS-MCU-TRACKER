@@ -4,6 +4,9 @@ import { createServer as createViteServer } from "vite";
 import * as telegramDb from "./server/telegramDb";
 import crypto from "crypto";
 import { MCU_TITLES } from "./src/data/mcuData";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Helper to convert Wikipedia thumbnail URL to original image URL as a fallback
 function getOriginalWikipediaUrl(url: string): string | null {
