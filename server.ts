@@ -92,7 +92,20 @@ const app = express();
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ limit: "15mb", extended: true }));
 
-export default app;
+// Custom Vercel routing adjustment middleware to preserve the original requested subpath
+app.use((req, res, next) => {
+  const forwardedPath = req.headers["x-vercel-forwarded-path"] || req.headers["x-matched-path"] || req.headers["x-forwarded-url"];
+  console.log(`[Express API Route Interceptor] method=${req.method} url=${req.url} originalUrl=${req.originalUrl} forwardedPath=${forwardedPath}`);
+
+  if (forwardedPath && typeof forwardedPath === "string" && forwardedPath.startsWith("/api")) {
+    // If the path was rewritten to /api/index.ts or /api, restore the original API subpath so Express router matches correctly
+    if (req.url !== forwardedPath) {
+      console.log(`[Express API Route Interceptor] Restoring req.url to forwardedPath: ${req.url} -> ${forwardedPath}`);
+      req.url = forwardedPath;
+    }
+  }
+  next();
+});
 
 // Check Telegram database connection configuration status
 app.get("/api/auth/status", (req, res) => {
@@ -1238,3 +1251,5 @@ async function startServer() {
 if (!process.env.VERCEL) {
   startServer();
 }
+
+export default app;
