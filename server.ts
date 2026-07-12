@@ -1,9 +1,9 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import * as telegramDb from "./backend/telegramDb";
+import * as telegramDb from "./backend/telegramDb.js";
 import crypto from "crypto";
-import { MCU_TITLES } from "./src/data/mcuData";
+import { MCU_TITLES } from "./src/data/mcuData.js";
 import dotenv from "dotenv";
 
 dotenv.config();

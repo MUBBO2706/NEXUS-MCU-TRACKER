@@ -1,4 +1,4 @@
-import { McuTitle, CharacterArc, InfinityStone, McuQuote, McuTrivia } from '../types';
+import { McuTitle, CharacterArc, InfinityStone, McuQuote, McuTrivia } from '../types.js';
 
 export const MCU_TITLES: McuTitle[] = [
   // --- PHASE 1 ---
