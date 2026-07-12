@@ -134,7 +134,7 @@ body {
 /* Confetti animation */
 @keyframes confettiFall {
   0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+  100% { transform: translateY(100dvh) rotate(360deg); opacity: 0; }
 }
 
 .confetti-particle {

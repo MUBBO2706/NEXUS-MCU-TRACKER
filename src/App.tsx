@@ -1179,7 +1179,7 @@ export default function App() {
 
   if (isAuthenticating && !isUnlocked) {
     return (
-      <div className="min-h-screen bg-black text-neutral-100 flex items-center justify-center p-4 font-sans">
+      <div className="min-h-screen bg-black text-neutral-100 flex items-center justify-center p-4 font-sans" style={{ minHeight: '100dvh' }}>
         <div className="flex flex-col items-center gap-4 text-center animate-fadeIn">
           <div className="relative w-12 h-12 flex items-center justify-center">
             <div className="absolute inset-0 border-2 border-neutral-800 border-t-marvel rounded-full animate-spin" />
@@ -1214,7 +1214,7 @@ export default function App() {
   const selectedMovie = selectedMovieId ? MCU_TITLES.find((m) => m.id === selectedMovieId) || null : null;
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b ${getThemeClass()} theme-${activeTheme} flex flex-col relative overflow-x-hidden transition-all duration-500`}>
+    <div className={`min-h-screen bg-gradient-to-b ${getThemeClass()} theme-${activeTheme} flex flex-col relative overflow-x-hidden transition-all duration-500`} style={{ minHeight: '100dvh' }}>
       {/* S.H.I.E.L.D. Floating Logo Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-black/85 backdrop-blur-md border-b border-neutral-900 px-4 py-3 md:py-3.5 flex items-center shadow-md h-14 md:h-16">
         <div className="max-w-lg md:max-w-4xl mx-auto w-full flex items-center justify-between gap-4">

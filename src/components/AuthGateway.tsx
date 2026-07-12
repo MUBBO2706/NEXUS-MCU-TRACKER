@@ -67,7 +67,7 @@ export function AuthGateway({
   };
 
   return (
-    <div className="min-h-screen bg-black text-neutral-100 flex flex-col items-center justify-center p-4 relative overflow-y-auto selection:bg-marvel selection:text-white">
+    <div className="min-h-screen bg-black text-neutral-100 flex flex-col items-center justify-center p-4 relative overflow-y-auto selection:bg-marvel selection:text-white" style={{ minHeight: '100dvh' }}>
       {/* Background Ambience */}
       <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-black to-neutral-950 pointer-events-none" />
       <div className="absolute top-10 right-10 w-64 h-64 bg-marvel/5 rounded-full blur-3xl pointer-events-none" />
