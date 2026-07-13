@@ -153,8 +153,8 @@ export const AnalyticsDash: React.FC<AnalyticsDashProps> = ({
             </div>
           </div>
 
-          {/* Sagas & Phases Grid Container - side-by-side on tablet, stacked on mobile and desktop */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-8 pt-2">
+          {/* Sagas & Phases Grid Container - side-by-side on tablet and desktop, stacked on mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 pt-2">
             {/* Sagas Progress Card */}
             <div className="flex flex-col gap-4">
               <span className="text-[11px] uppercase font-bold text-neutral-400 tracking-wider font-display">Sagas Completion Progress</span>
@@ -209,7 +209,7 @@ export const AnalyticsDash: React.FC<AnalyticsDashProps> = ({
             <Heart className="w-4 h-4 text-marvel" />
             Intel Preferences (Personalize)
           </span>
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-neutral-400">Favorite MCU Phase</label>
               <CustomDropdown
