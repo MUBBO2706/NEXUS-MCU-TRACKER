@@ -348,13 +348,13 @@ export const DetailModal: React.FC<DetailModalProps> = ({
               {/* Story Connections / Timeline Links */}
               <div className="space-y-2.5">
                 <span className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Storyline Connections</span>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-4 sm:w-max">
                   {movie.connections.previousTitleId && (
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 sm:w-56">
                       <span className="text-[8px] uppercase text-neutral-500 font-bold font-mono">Required Before</span>
                       <button
                         onClick={() => movie.connections.previousTitleId && onSelectMovie(movie.connections.previousTitleId)}
-                        className="flex items-center justify-between p-2.5 bg-neutral-900/40 border border-neutral-800/60 rounded-xl hover:bg-neutral-800 text-left focus:outline-none transition-colors"
+                        className="flex items-center justify-between p-2.5 bg-neutral-900/40 border border-neutral-800/60 rounded-xl hover:bg-neutral-800 text-left focus:outline-none transition-colors w-full"
                       >
                         <span className="font-sans text-xs font-semibold text-white truncate max-w-[150px]">
                           {MCU_TITLES.find((m) => m.id === movie.connections.previousTitleId)?.title || 'Previous'}
@@ -365,11 +365,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                   )}
 
                   {movie.connections.nextTitleId && (
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 sm:w-56">
                       <span className="text-[8px] uppercase text-neutral-500 font-bold font-mono">What to Watch Next</span>
                       <button
                         onClick={() => movie.connections.nextTitleId && onSelectMovie(movie.connections.nextTitleId)}
-                        className="flex items-center justify-between p-2.5 bg-neutral-900/40 border border-neutral-800/60 rounded-xl hover:bg-neutral-800 text-left focus:outline-none transition-colors"
+                        className="flex items-center justify-between p-2.5 bg-neutral-900/40 border border-neutral-800/60 rounded-xl hover:bg-neutral-800 text-left focus:outline-none transition-colors w-full"
                       >
                         <span className="font-sans text-xs font-semibold text-white truncate max-w-[150px]">
                           {MCU_TITLES.find((m) => m.id === movie.connections.nextTitleId)?.title || 'Next'}
@@ -402,7 +402,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
             </div>
 
             {/* Status Segment Buttons */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-2.5 sm:w-max">
               {[
                 { key: 'unwatched', name: 'Unwatched', icon: Clock },
                 { key: 'dropped', name: 'Dropped', icon: X },
@@ -415,7 +415,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     onClick={() => {
                       setStatus(item.key as any);
                     }}
-                    className={`text-[11px] font-semibold py-2.5 px-1.5 rounded-xl border transition-all text-center focus:outline-none flex items-center justify-center gap-1.5 ${
+                    className={`text-[11px] font-semibold py-2.5 px-1.5 rounded-xl border transition-all text-center focus:outline-none flex items-center justify-center gap-1.5 sm:px-4 sm:py-2 sm:w-max ${
                       status === item.key
                         ? 'bg-marvel/10 border-marvel text-white font-bold'
                         : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:border-neutral-700'
@@ -557,7 +557,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
         <button
           onClick={handleSave}
           disabled={saveState === 'saving'}
-          className={`w-full text-white font-bold text-xs py-3 rounded-xl shadow-md transition-all focus:outline-none flex items-center justify-center gap-2 ${
+          className={`w-full sm:w-max sm:px-8 sm:self-end text-white font-bold text-xs py-3 rounded-xl shadow-md transition-all focus:outline-none flex items-center justify-center gap-2 ${
             saveState === 'saving'
               ? 'bg-neutral-800 cursor-not-allowed opacity-80'
               : saveState === 'success'

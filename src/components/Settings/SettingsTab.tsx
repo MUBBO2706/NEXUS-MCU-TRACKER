@@ -57,7 +57,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         <p className="text-[10px] text-neutral-400 leading-relaxed -mt-2 text-left">
           Select your default timeline perspective. Theatrical Release Order provides the classic cinema release flow, while Chronological Order arranges titles sequentially as events happened in the MCU story.
         </p>
-        <div className="grid grid-cols-2 gap-3" id="settings-order-grid">
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-4 sm:w-max" id="settings-order-grid">
           {[
             { id: 'theatrical', name: 'Theatrical Order', desc: 'Default (Classic Release)' },
             { id: 'chronological', name: 'Chronological Timeline', desc: 'Story Order' },
@@ -68,7 +68,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               onClick={() => {
                 updatePreference('orderingMode', o.id);
               }}
-              className={`p-3 rounded-xl border text-left flex flex-col justify-center gap-0.5 transition-all focus:outline-none min-w-0 w-full cursor-pointer h-[58px] ${
+              className={`p-3 rounded-xl border text-left flex flex-col justify-center gap-0.5 transition-all focus:outline-none min-w-0 w-full sm:w-56 cursor-pointer h-[58px] ${
                 orderingMode === o.id
                   ? 'border-marvel bg-marvel/5 shadow-md shadow-marvel/5 font-bold'
                   : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
@@ -90,7 +90,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         <span className="text-xs uppercase font-bold text-neutral-400 tracking-wider font-display">
           Theme Presets & Skins
         </span>
-        <div className="grid grid-cols-3 gap-2.5" id="settings-theme-grid">
+        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6 sm:w-max sm:gap-3" id="settings-theme-grid">
           {[
             { id: 'oled', name: 'OLED Black', color: 'bg-black border-red-500' },
             { id: 'cosmic', name: 'Cosmic Purple', color: 'bg-indigo-950 border-purple-500' },
@@ -105,7 +105,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               onClick={() => {
                 updatePreference('theme', t.id as any);
               }}
-              className={`p-2.5 rounded-xl border text-center flex flex-col items-center justify-center gap-2 transition-all focus:outline-none min-w-0 w-full h-[76px] cursor-pointer ${
+              className={`p-2.5 rounded-xl border text-center flex flex-col items-center justify-center gap-2 transition-all focus:outline-none min-w-0 w-full sm:w-36 h-[76px] cursor-pointer ${
                 activeTheme === t.id
                   ? 'border-marvel bg-neutral-900 font-bold'
                   : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
@@ -123,12 +123,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         <span className="text-xs uppercase font-bold text-neutral-400 tracking-wider font-display">
           Backups & Sync System
         </span>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-4 sm:w-max">
           <button
             type="button"
             onClick={handleExportData}
             disabled={isRestoring}
-            className={`flex items-center justify-center gap-1.5 bg-neutral-900 border border-neutral-800 text-white font-semibold text-[10px] xs:text-[11px] sm:text-xs py-3 px-1.5 rounded-xl transition-colors focus:outline-none whitespace-nowrap overflow-hidden cursor-pointer ${
+            className={`flex items-center justify-center gap-1.5 bg-neutral-900 border border-neutral-800 text-white font-semibold text-[10px] xs:text-[11px] sm:text-xs py-3 px-1.5 rounded-xl transition-colors focus:outline-none whitespace-nowrap overflow-hidden cursor-pointer w-full sm:w-56 ${
               isRestoring ? 'opacity-50 cursor-not-allowed' : 'hover:bg-neutral-800'
             }`}
           >
@@ -136,12 +136,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             Export JSON Backup
           </button>
           {isRestoring ? (
-            <div className="flex items-center justify-center gap-1.5 bg-neutral-900/40 text-neutral-500 border border-neutral-800/65 text-[10px] xs:text-[11px] sm:text-xs py-3 px-1.5 rounded-xl whitespace-nowrap overflow-hidden select-none cursor-not-allowed">
+            <div className="flex items-center justify-center gap-1.5 bg-neutral-900/40 text-neutral-500 border border-neutral-800/65 text-[10px] xs:text-[11px] sm:text-xs py-3 px-1.5 rounded-xl whitespace-nowrap overflow-hidden select-none cursor-not-allowed w-full sm:w-56">
               <div className="w-3.5 h-3.5 border-2 border-neutral-600 border-t-marvel rounded-full animate-spin flex-shrink-0" />
               <span className="truncate">{restoreProgress || 'Restoring...'}</span>
             </div>
           ) : (
-            <label className="flex items-center justify-center gap-1.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-white font-semibold text-[10px] xs:text-[11px] sm:text-xs py-3 px-1.5 rounded-xl cursor-pointer transition-colors whitespace-nowrap overflow-hidden">
+            <label className="flex items-center justify-center gap-1.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-white font-semibold text-[10px] xs:text-[11px] sm:text-xs py-3 px-1.5 rounded-xl cursor-pointer transition-colors whitespace-nowrap overflow-hidden w-full sm:w-56">
               <Upload className="w-3.5 h-3.5 flex-shrink-0" />
               Restore JSON Backup
               <input
@@ -203,7 +203,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mt-1">
+          <div className="grid grid-cols-2 gap-3 mt-1 sm:flex sm:items-center sm:gap-4 sm:w-max">
             <button
               type="button"
               onClick={async () => {
@@ -212,7 +212,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 showFeedback('Cache rebuild complete!', 'success');
               }}
               disabled={cacheProgress.isSyncing}
-              className="flex items-center justify-center gap-1.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-white font-semibold text-[10px] xs:text-[11px] py-3 rounded-xl transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="flex items-center justify-center gap-1.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-white font-semibold text-[10px] xs:text-[11px] py-3 rounded-xl transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer w-full sm:w-56"
             >
               <RotateCcw className="w-3.5 h-3.5 flex-shrink-0" />
               Force Cache Rebuild
@@ -226,7 +226,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 }
               }}
               disabled={cacheProgress.isSyncing}
-              className="flex items-center justify-center gap-1.5 bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 text-red-400 font-semibold text-[10px] xs:text-[11px] py-3 rounded-xl transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="flex items-center justify-center gap-1.5 bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 text-red-400 font-semibold text-[10px] xs:text-[11px] py-3 rounded-xl transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer w-full sm:w-56"
             >
               <RotateCcw className="w-3.5 h-3.5 flex-shrink-0" />
               Purge Local Cache
@@ -240,11 +240,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         <span className="text-xs uppercase font-bold text-neutral-400 tracking-wider font-display">
           Application &amp; Account Management
         </span>
-        <div className={`grid gap-3 w-full ${authToken ? 'grid-cols-2' : 'grid-cols-1'}`}>
+        <div className={`grid gap-3 w-full ${authToken ? 'grid-cols-2' : 'grid-cols-1'} sm:flex sm:items-center sm:gap-4 sm:w-max`}>
           <button
             type="button"
             onClick={handleResetProgress}
-            className="w-full bg-red-600/10 hover:bg-red-600/20 text-red-500 font-semibold text-xs py-3.5 rounded-xl border border-red-500/20 transition-colors focus:outline-none cursor-pointer"
+            className="w-full sm:w-56 bg-red-600/10 hover:bg-red-600/20 text-red-500 font-semibold text-xs py-3.5 rounded-xl border border-red-500/20 transition-colors focus:outline-none cursor-pointer"
           >
             Reset Application
           </button>
@@ -253,7 +253,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             <button
               type="button"
               onClick={() => setShowDeleteAccountModal(true)}
-              className="w-full bg-rose-600/10 hover:bg-rose-600/20 text-rose-500 font-semibold text-xs py-3.5 rounded-xl border border-rose-500/20 transition-colors focus:outline-none cursor-pointer"
+              className="w-full sm:w-56 bg-rose-600/10 hover:bg-rose-600/20 text-rose-500 font-semibold text-xs py-3.5 rounded-xl border border-rose-500/20 transition-colors focus:outline-none cursor-pointer"
             >
               Delete Account
             </button>

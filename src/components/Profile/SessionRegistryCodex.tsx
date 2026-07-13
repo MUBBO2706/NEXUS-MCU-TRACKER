@@ -170,63 +170,66 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
         </p>
       </div>
 
-      {/* Row 1: Search Bar */}
-      <div className="w-full relative py-1 z-30">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
-        <input
-          type="text"
-          placeholder="Search browser, OS..."
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setPage(1);
-          }}
-          className="w-full bg-neutral-900 border border-neutral-850 text-white text-xs rounded-xl pl-10 pr-4 py-2.5 h-10 focus:border-marvel focus:outline-none font-sans"
-        />
-      </div>
-
-      {/* Row 2: Three Custom Selectors on the same row, including on mobile */}
-      <div className="grid grid-cols-3 gap-2.5 z-20">
-        <div>
-          <CustomDropdown
-            value={filterStatus}
-            onChange={(val) => {
-              setFilterStatus(val);
+      {/* Search and Filters Group */}
+      <div className="flex flex-col md:flex-row gap-2.5 z-30 w-full md:items-center">
+        {/* Row 1 / Left on desktop: Search Bar */}
+        <div className="w-full md:flex-1 relative py-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
+          <input
+            type="text"
+            placeholder="Search browser, OS..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
               setPage(1);
             }}
-            options={statusOptions}
-            activeTheme={activeTheme}
-            placeholder="All Statuses"
-            align="left"
+            className="w-full bg-neutral-900 border border-neutral-850 text-white text-xs rounded-xl pl-10 pr-4 py-2.5 h-10 focus:border-marvel focus:outline-none font-sans"
           />
         </div>
 
-        <div>
-          <CustomDropdown
-            value={sortOrder}
-            onChange={(val) => {
-              setSortOrder(val as any);
-              setPage(1);
-            }}
-            options={sortOptions}
-            activeTheme={activeTheme}
-            placeholder="Sort By"
-            align="center"
-          />
-        </div>
+        {/* Row 2 / Right on desktop: Three Custom Selectors */}
+        <div className="grid grid-cols-3 gap-2.5 w-full md:w-auto md:flex md:items-center flex-shrink-0">
+          <div className="md:w-44">
+            <CustomDropdown
+              value={filterStatus}
+              onChange={(val) => {
+                setFilterStatus(val);
+                setPage(1);
+              }}
+              options={statusOptions}
+              activeTheme={activeTheme}
+              placeholder="All Statuses"
+              align="left"
+            />
+          </div>
 
-        <div>
-          <CustomDropdown
-            value={timeRange}
-            onChange={(val) => {
-              setTimeRange(val);
-              setPage(1);
-            }}
-            options={timeRangeOptions}
-            activeTheme={activeTheme}
-            placeholder="Time Range"
-            align="right"
-          />
+          <div className="md:w-36">
+            <CustomDropdown
+              value={sortOrder}
+              onChange={(val) => {
+                setSortOrder(val as any);
+                setPage(1);
+              }}
+              options={sortOptions}
+              activeTheme={activeTheme}
+              placeholder="Sort By"
+              align="center"
+            />
+          </div>
+
+          <div className="md:w-36">
+            <CustomDropdown
+              value={timeRange}
+              onChange={(val) => {
+                setTimeRange(val);
+                setPage(1);
+              }}
+              options={timeRangeOptions}
+              activeTheme={activeTheme}
+              placeholder="Time Range"
+              align="right"
+            />
+          </div>
         </div>
       </div>
 

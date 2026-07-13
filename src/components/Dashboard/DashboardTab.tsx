@@ -136,7 +136,7 @@ export function DashboardTab({
 
                   <button
                     onClick={() => handleSelectMovieId(nextRecommendation.id)}
-                    className="w-full bg-marvel text-white font-semibold text-xs py-2 rounded-xl hover:bg-red-600 transition-colors text-center font-sans mt-2 cursor-pointer"
+                    className="w-full md:w-max md:px-5 bg-marvel text-white font-semibold text-xs py-2 rounded-xl hover:bg-red-600 transition-colors text-center font-sans mt-2 cursor-pointer"
                   >
                     Inspect Detailed Intel
                   </button>
