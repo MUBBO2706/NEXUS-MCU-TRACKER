@@ -103,7 +103,7 @@ export const CharacterHub: React.FC<CharacterHubProps> = ({ onSelectMovie }) => 
           <span className="text-xs text-neutral-500 font-mono">No matching characters found in the Codex records</span>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-6 gap-y-4">
           {filteredCharacters.map((char) => {
             const isExpanded = selectedCharId === char.id;
             return (

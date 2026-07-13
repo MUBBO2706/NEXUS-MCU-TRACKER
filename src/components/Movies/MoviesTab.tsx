@@ -232,7 +232,7 @@ export function MoviesTab({
       )}
 
       {/* Movies List View Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4" id="movies-grid">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-6 gap-y-4" id="movies-grid">
         {filteredMovies.length > 0 ? (
           filteredMovies.map((m) => {
             const watch = watchData[m.id];
@@ -321,7 +321,7 @@ export function MoviesTab({
             );
           })
         ) : (
-          <div className="p-8 text-center text-xs text-neutral-500 col-span-2">
+          <div className="p-8 text-center text-xs text-neutral-500 col-span-full">
             No movies found matching criteria.
           </div>
         )}

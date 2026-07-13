@@ -53,7 +53,7 @@ export function TimelineTab({
       </div>
 
       {/* Vertical timeline card blocks */}
-      <div className="max-w-2xl mx-auto relative border-l-2 border-neutral-850 pl-8 space-y-3 ml-4 sm:ml-auto" id="timeline-vertical-path">
+      <div className="w-full max-w-none relative border-l-2 border-neutral-850 pl-8 space-y-3 ml-4 sm:ml-auto md:border-l-0 md:pl-0 md:space-y-0 md:ml-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 md:gap-4" id="timeline-vertical-path">
         {getSortedMcuTitles(timelineMode === 'timeline' ? 'chronological' : 'theatrical')
           .map((m, idx) => {
             const watch = watchData[m.id];
@@ -64,7 +64,7 @@ export function TimelineTab({
                 className="group cursor-pointer relative"
               >
                 {/* Timeline dot node */}
-                <span className={`absolute -left-[41px] top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 transition-all z-10 ${
+                <span className={`absolute -left-[41px] top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 transition-all z-10 md:hidden ${
                   watch?.status === 'completed'
                     ? 'bg-emerald-500 border-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
                     : watch?.status === 'dropped'
@@ -72,7 +72,7 @@ export function TimelineTab({
                     : 'bg-neutral-950 border-neutral-700'
                 }`} />
 
-                <div className="py-3 border-b border-neutral-900/80 group-hover:bg-neutral-900/10 transition-all flex justify-between items-center px-2 rounded-xl">
+                <div className="py-3 border-b border-neutral-900/80 group-hover:bg-neutral-900/10 transition-all flex justify-between items-center px-2 rounded-xl md:border md:border-neutral-850 md:bg-neutral-950/40 md:hover:bg-neutral-900/30 md:p-4 md:rounded-2xl md:h-full">
                   <div className="flex flex-col gap-0.5 pr-4 min-w-0 text-left">
                     <span className="font-mono text-[8px] uppercase tracking-wider text-marvel font-bold">
                       #{idx + 1} • {m.type === 'movie' ? 'Movie' : 'Series'}

@@ -1217,7 +1217,7 @@ export default function App() {
     <div className={`min-h-screen bg-gradient-to-b ${getThemeClass()} theme-${activeTheme} flex flex-col relative overflow-x-hidden transition-all duration-500`} style={{ minHeight: '100dvh' }}>
       {/* S.H.I.E.L.D. Floating Logo Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-black/85 backdrop-blur-md border-b border-neutral-900 px-4 py-3 md:py-3.5 flex items-center shadow-md h-14 md:h-16">
-        <div className="max-w-lg md:max-w-4xl mx-auto w-full flex items-center justify-between gap-4">
+        <div className="w-full flex items-center justify-between gap-4">
           <button
             onClick={handleStanLeeTap}
             className="flex items-center gap-2 focus:outline-none flex-shrink-0"
@@ -1360,7 +1360,7 @@ export default function App() {
       </header>
 
       {/* CORE LAYOUT CANVAS */}
-      <main className="flex-1 max-w-lg md:max-w-4xl mx-auto w-full px-4 pt-20 md:pt-24 pb-20 md:pb-8 flex flex-col items-center">
+      <main className="flex-1 w-full px-4 md:px-6 pt-20 md:pt-24 pb-20 md:pb-8 flex flex-col items-center">
         <div className="w-full space-y-6 md:space-y-8">
           {selectedMovie ? (
             <DetailModal

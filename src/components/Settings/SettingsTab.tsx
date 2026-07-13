@@ -38,7 +38,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   setShowDeleteAccountModal,
 }) => {
   return (
-    <div className="flex flex-col animate-fadeIn text-left gap-6 font-sans w-full max-w-2xl mx-auto py-2 px-1" id="settings-station-view">
+    <div className="flex flex-col animate-fadeIn text-left gap-6 font-sans w-full py-2 px-1" id="settings-station-view">
       <div className="flex flex-col gap-1.5 border-b border-neutral-900 pb-4">
         <h2 className="font-display font-bold text-2xl tracking-tight text-white flex items-center gap-2">
           <Settings className="text-marvel w-6 h-6 animate-spin-slow" />

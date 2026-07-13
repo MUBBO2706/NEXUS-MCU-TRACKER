@@ -147,7 +147,7 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
   const pageSessions = sorted.slice(startIndex, startIndex + limit);
 
   return (
-    <div className="flex flex-col animate-fadeIn text-left gap-3 font-sans w-full max-w-2xl mx-auto py-2 px-1" id="session-registry-codex-expanded">
+    <div className="flex flex-col animate-fadeIn text-left gap-3 font-sans w-full py-2 px-1" id="session-registry-codex-expanded">
       {/* Inline Back navigation above the title */}
       <div className="pt-0 pb-0.5">
         <button
