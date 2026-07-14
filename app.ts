@@ -323,7 +323,7 @@ app.get("/api/auth/status", (req, res) => {
           watchData: userJson.watchData,
           unlockedAchievements: userJson.unlockedAchievements,
           preferences: userJson.preferences,
-          avatarUrl: (userJson.avatarFileId || userJson.avatarUrl) ? `/api/user/avatar?userId=${userId}` : "",
+          avatarUrl: (userJson.avatarFileId || userJson.avatarUrl) ? `/api/user/avatar?userId=${userId}&v=${userJson.lastUpdated || userJson.createdAt}` : "",
           updates: userJson.updates || [],
         },
       });
@@ -408,7 +408,7 @@ app.get("/api/auth/status", (req, res) => {
           watchData: userJson.watchData || {},
           unlockedAchievements: userJson.unlockedAchievements || [],
           preferences: userJson.preferences || {},
-          avatarUrl: (userEntry.avatarFileId || userJson.avatarFileId || userJson.avatarUrl) ? `/api/user/avatar?userId=${userEntry.userId}` : "",
+          avatarUrl: (userEntry.avatarFileId || userJson.avatarFileId || userJson.avatarUrl) ? `/api/user/avatar?userId=${userEntry.userId}&v=${userJson.lastUpdated || userJson.createdAt}` : "",
           updates: userJson.updates || [],
         },
       });
@@ -455,7 +455,7 @@ app.get("/api/auth/status", (req, res) => {
           watchData: userFile.watchData || {},
           unlockedAchievements: userFile.unlockedAchievements || [],
           preferences: userFile.preferences || {},
-          avatarUrl: (userFile.avatarFileId || userFile.avatarUrl) ? `/api/user/avatar?userId=${userFile.userId}` : "",
+          avatarUrl: (userFile.avatarFileId || userFile.avatarUrl) ? `/api/user/avatar?userId=${userFile.userId}&v=${userFile.lastUpdated || userFile.createdAt}` : "",
           updates: userFile.updates || [],
         },
       });
@@ -696,7 +696,7 @@ app.get("/api/auth/status", (req, res) => {
           watchData: resultUser.watchData,
           unlockedAchievements: resultUser.unlockedAchievements,
           preferences: resultUser.preferences,
-          avatarUrl: (resultUser.avatarFileId || resultUser.avatarUrl) ? `/api/user/avatar?userId=${resultUser.userId}` : "",
+          avatarUrl: (resultUser.avatarFileId || resultUser.avatarUrl) ? `/api/user/avatar?userId=${resultUser.userId}&v=${resultUser.lastUpdated || resultUser.createdAt}` : "",
           updates: resultUser.updates || [],
         }
       });
@@ -807,7 +807,7 @@ app.get("/api/auth/status", (req, res) => {
           watchData: resultUser.watchData,
           unlockedAchievements: resultUser.unlockedAchievements,
           preferences: resultUser.preferences,
-          avatarUrl: (resultUser.avatarFileId || resultUser.avatarUrl) ? `/api/user/avatar?userId=${resultUser.userId}` : "",
+          avatarUrl: (resultUser.avatarFileId || resultUser.avatarUrl) ? `/api/user/avatar?userId=${resultUser.userId}&v=${resultUser.lastUpdated || resultUser.createdAt}` : "",
           updates: resultUser.updates || [],
         }
       });
@@ -1100,7 +1100,7 @@ Last Updated: ${lastUpdatedIst}
 
       res.json({
         success: true,
-        avatarUrl: `/api/user/avatar?userId=${decoded.userId}`
+        avatarUrl: `/api/user/avatar?userId=${decoded.userId}&v=${userFile.lastUpdated}`
       });
     } catch (err: any) {
       console.error("Avatar upload error:", err);
