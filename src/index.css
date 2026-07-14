@@ -16,6 +16,17 @@
   --radius-sm: 2px;
 }
 
+/* Custom Text Selection Theme */
+::selection {
+  background-color: #e62429 !important;
+  color: #ffffff !important;
+}
+
+::-moz-selection {
+  background-color: #e62429 !important;
+  color: #ffffff !important;
+}
+
 /* Custom CSS Scrollbar */
 ::-webkit-scrollbar {
   width: 5px;

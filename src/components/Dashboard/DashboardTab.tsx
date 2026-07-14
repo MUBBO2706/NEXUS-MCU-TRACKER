@@ -3,6 +3,7 @@ import { MCU_TITLES, THEATRICAL_ORDER_IDS, CHRONOLOGICAL_ORDER_IDS } from '../..
 import { UserWatchData, McuTitle } from '../../types';
 import { ProgressRing } from '../ProgressRing';
 import { LazyImage } from '../LazyImage';
+import { Shield, Clock, AlertCircle, Zap } from 'lucide-react';
 
 interface DashboardTabProps {
   watchData: Record<string, UserWatchData>;
@@ -23,38 +24,124 @@ export function DashboardTab({
   handleSelectMovieId,
   orderingMode,
 }: DashboardTabProps) {
+  const [secondsTick, setSecondsTick] = React.useState<number>(0);
+
+  // Seconds ticking effect for high-fidelity live update
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setSecondsTick((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const orderList = nextRecommendation ? (orderingMode === 'theatrical' ? THEATRICAL_ORDER_IDS : CHRONOLOGICAL_ORDER_IDS) : [];
   const orderIndex = nextRecommendation ? orderList.indexOf(nextRecommendation.id) + 1 : 0;
 
+  // Local precise countdown to Avengers: Secret Wars (May 7, 2027)
+  const targetDate = new Date('2027-05-07T00:00:00');
+  const now = new Date();
+  const diff = targetDate.getTime() - now.getTime();
+  
+  let days = 0, hours = 0, minutes = 0, seconds = 0;
+  if (diff > 0) {
+    days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    minutes = Math.floor((diff / (1000 * 60)) % 60);
+    seconds = Math.floor((diff / 1000) % 60);
+  }
+
+  // Calibration loop (counts down within 15 minutes chunks)
+  const currentMinutes = now.getMinutes();
+  const currentSeconds = now.getSeconds();
+  const minutesToNextSync = 14 - (currentMinutes % 15);
+  const secondsToNextSync = 59 - currentSeconds;
+  const tvaSyncString = `${String(minutesToNextSync).padStart(2, '0')}m ${String(secondsToNextSync).padStart(2, '0')}s`;
+
+  // Rotate supporting alert messages every 6 seconds
+  const alerts = [
+    { text: "TVA Secure Link Active. Monitoring 4.8M+ reality lines...", type: "info" },
+    { text: "Quantum energy spikes registered near Sector-616 coordinates.", type: "energy" },
+    { text: "Multiversal convergence vectors converging. Focus timeline: Earth-616.", type: "danger" }
+  ];
+  const alertIndex = Math.floor(secondsTick / 6) % alerts.length;
+  const activeAlert = alerts[alertIndex];
+
   return (
     <>
-      {/* Countdown / Hero Showcase Card */}
-      <div className="relative glass-card rounded-xl border border-neutral-800 p-5 overflow-hidden flex flex-col justify-between h-44 shadow-lg" id="dashboard-hero-countdown">
-        {/* Cover backdrop element */}
-        <div className="absolute inset-0 opacity-25 bg-gradient-to-r from-red-600/20 via-transparent to-transparent pointer-events-none" />
-        <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-br from-marvel/10 to-transparent blur-2xl rounded-full pointer-events-none" />
+      {/* S.H.I.E.L.D. Multiverse Command & Countdown Hub */}
+      <div className="relative rounded-xl p-5 overflow-hidden flex flex-col justify-between min-h-[14rem] sm:min-h-[13rem] h-auto shadow-2xl border border-red-950/40 bg-gradient-to-br from-neutral-950 via-red-950/20 to-neutral-950" id="dashboard-hero-countdown">
+        {/* Cover backdrop elements */}
+        <div className="absolute inset-0 opacity-15 bg-gradient-to-r from-red-600/10 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-br from-red-500/10 to-transparent blur-3xl rounded-full pointer-events-none" />
 
-        <div className="flex items-start justify-between z-10">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[9px] uppercase tracking-wider text-marvel font-bold font-mono">
-              Multiverse Countdown
+        {/* Header Title */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 z-10 pb-3 border-b border-red-950/20">
+          <div className="flex flex-col text-left">
+            <span className="text-[9px] uppercase tracking-wider text-red-400 font-bold font-mono flex items-center gap-1">
+              <Shield className="w-2.5 h-2.5 text-red-500" />
+              S.H.I.E.L.D. Chrono-Monitor
             </span>
-            <h3 className="font-display font-bold text-base text-white">
-              Avengers: Secret Wars
+            <h3 className="font-display font-bold text-xs text-neutral-200 tracking-wide uppercase">
+              MULTIVERSE INCURSION CRITICAL
             </h3>
           </div>
-          <span className="text-[10px] font-mono bg-marvel/20 border border-marvel/30 text-white px-2.5 py-0.5 rounded-full font-bold">
-            Phase 6 Hub
-          </span>
         </div>
 
-        <div className="z-10 space-y-1">
-          <div className="font-mono text-xl sm:text-2xl font-bold text-white tracking-tight">
-            {countdownString}
+        {/* Dynamic Card Content Area: Containerless & Naturally Flowing Grid */}
+        <div className="z-10 py-3.5 flex-1 grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+          {/* Left Side: Countdown Timer & Timeline Progress */}
+          <div className="md:col-span-7 flex flex-col gap-3">
+            {/* Countdown string & labels presented purely through premium typography without nested boxes */}
+            <div className="flex items-baseline gap-1.5 text-left">
+              <span className="font-mono text-3xl font-extrabold text-white tracking-tight">
+                {String(days).padStart(2, '0')}
+              </span>
+              <span className="text-[10px] font-mono uppercase text-red-400 font-bold mr-2">d</span>
+
+              <span className="font-mono text-3xl font-extrabold text-white tracking-tight">
+                {String(hours).padStart(2, '0')}
+              </span>
+              <span className="text-[10px] font-mono uppercase text-red-400 font-bold mr-2">h</span>
+
+              <span className="font-mono text-3xl font-extrabold text-white tracking-tight">
+                {String(minutes).padStart(2, '0')}
+              </span>
+              <span className="text-[10px] font-mono uppercase text-red-400 font-bold mr-2">m</span>
+
+              <span className="font-mono text-3xl font-extrabold text-white tracking-tight">
+                {String(seconds).padStart(2, '0')}
+              </span>
+              <span className="text-[10px] font-mono uppercase text-red-400 font-bold">s</span>
+            </div>
+
+            {/* Simple Progress bar */}
+            <div className="flex flex-col gap-1">
+              <div className="h-1 w-full bg-red-950/30 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full" style={{ width: '74.2%' }} />
+              </div>
+              <div className="flex justify-between items-center text-[9px] font-mono font-medium text-neutral-400">
+                <span>Timeline Collapse Vector</span>
+                <span className="text-red-400 font-bold">74.2% Converged</span>
+              </div>
+            </div>
           </div>
-          <p className="text-[10px] text-neutral-400">
-            Countdown ticking live until Battleworld resets the sacred timelines in 2027.
-          </p>
+
+          {/* Right Side: Key TVA Metrics & Next Milestones (Side-by-side or stacked on mobile) */}
+          <div className="md:col-span-5 flex flex-col gap-3 text-left md:border-l border-red-950/20 md:pl-6 pt-3 md:pt-0">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[8px] font-mono font-bold text-neutral-500 uppercase tracking-widest">Active Realities Tracked</span>
+              <span className="font-mono text-sm font-extrabold text-neutral-200">
+                {(4812042 + Math.floor(secondsTick * 1.3)).toLocaleString()}
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[8px] font-mono font-bold text-neutral-500 uppercase tracking-widest">Next Major Convergence</span>
+              <span className="font-display font-semibold text-xs text-red-400">
+                Avengers: Doomsday (May 2026)
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 

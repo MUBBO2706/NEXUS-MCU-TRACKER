@@ -139,7 +139,7 @@ export function ProfileTab({
           formatToIndianDateTime={formatToIndianDateTime}
         />
       ) : (
-        <div className="flex flex-col gap-6 font-sans w-full py-2 px-1 text-left animate-fadeIn" id="profile-main-container">
+        <div className="flex flex-col gap-4 font-sans w-full py-1 px-1 text-left animate-fadeIn" id="profile-main-container">
           <div className="flex flex-col gap-1.5" id="profile-station-view">
             <h2 className="font-display font-bold text-2xl tracking-tight text-white flex items-center gap-2">
               <User className="text-marvel w-6 h-6" />

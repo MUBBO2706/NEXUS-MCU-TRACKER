@@ -101,9 +101,9 @@ export const AnalyticsDash: React.FC<AnalyticsDashProps> = ({
       {/* Grid Overview Cards & Details layout wrapper */}
       <div className="flex flex-col gap-8">
         {/* Row 1: Stats & Intel Preferences */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8" id="analytics-grid-layout">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" id="analytics-grid-layout">
           {/* Left Column: Stats (2x2 Grid) */}
-          <div className="lg:col-span-2 grid grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-2 gap-3.5">
             <div className="bg-neutral-950 p-4 rounded-xl border border-neutral-800 flex items-center gap-3 overflow-hidden">
               <div className="p-2.5 bg-marvel/10 rounded-xl border border-marvel/20 text-marvel flex-shrink-0">
                 <Film className="w-5 h-5" />
@@ -154,7 +154,7 @@ export const AnalyticsDash: React.FC<AnalyticsDashProps> = ({
           </div>
 
           {/* Right Column: Intel Preferences (Personalize) */}
-          <div className="lg:col-span-1 flex flex-col gap-4 relative z-30 pt-6 lg:pt-0 border-t lg:border-t-0 border-neutral-900/60">
+          <div className="flex flex-col gap-4 relative z-30 pt-6 lg:pt-0 border-t lg:border-t-0 border-neutral-900/60">
             <span className="text-[11px] uppercase font-bold text-neutral-400 tracking-wider font-display flex items-center gap-1.5">
               <Heart className="w-4 h-4 text-marvel" />
               Intel Preferences (Personalize)

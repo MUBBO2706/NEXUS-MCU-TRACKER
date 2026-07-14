@@ -316,19 +316,7 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
   const pageLogs = sorted.slice(startIndex, startIndex + limit);
 
   return (
-    <div className="flex flex-col animate-fadeIn text-left gap-3 font-sans w-full py-2 px-1" id="updates-ledger-expanded">
-      {/* Inline Back navigation above the title */}
-      <div className="pt-0 pb-0.5">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-2.5 text-sm sm:text-base font-semibold text-neutral-300 hover:text-white transition-all focus:outline-none cursor-pointer bg-transparent border-0 py-2 pr-4 pl-0 hover:translate-x-[-2px] min-h-[40px] touch-manipulation"
-        >
-          <ArrowLeft className={`w-5 h-5 ${themeStyles.marvelIcon} animate-fadeIn`} />
-          <span>Back to Profile</span>
-        </button>
-      </div>
-
+    <div className="flex flex-col animate-fadeIn text-left gap-2 font-sans w-full py-1 px-1" id="updates-ledger-expanded">
       <div className="flex flex-col gap-1 text-left">
         <h2 className="font-display font-bold text-2xl tracking-tight text-white flex items-center gap-2">
           <Database className={`${themeStyles.marvelIcon} w-6 h-6 animate-pulse`} />

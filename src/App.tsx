@@ -26,7 +26,8 @@ import {
   LogOut,
   Eye,
   EyeOff,
-  Settings
+  Settings,
+  ArrowLeft
 } from 'lucide-react';
 
 // Import Feature Tab Components
@@ -1218,14 +1219,28 @@ export default function App() {
       {/* S.H.I.E.L.D. Floating Logo Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-black/85 backdrop-blur-md border-b border-neutral-900 px-4 py-3 md:py-3.5 flex items-center shadow-md h-14 md:h-16">
         <div className="w-full flex items-center justify-between gap-4">
-          <button
-            onClick={handleStanLeeTap}
-            className="flex items-center gap-2 focus:outline-none flex-shrink-0"
-          >
-            <span className="font-display font-black text-lg tracking-tighter bg-marvel text-white px-2 py-0.5 rounded italic">
-              MARVEL
-            </span>
-          </button>
+          {(showAllSessions || showAllUpdates) ? (
+            <button
+              onClick={() => {
+                setShowAllSessions(false);
+                setShowAllUpdates(false);
+              }}
+              className="flex items-center gap-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-300 hover:text-white transition-all focus:outline-none cursor-pointer bg-transparent border-0 py-1 pr-3 pl-0 hover:translate-x-[-2px] min-h-[36px] touch-manipulation"
+              title="Back to Profile"
+            >
+              <ArrowLeft className="w-5 h-5 text-marvel animate-fadeIn" />
+              <span>Back</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleStanLeeTap}
+              className="flex items-center gap-2 focus:outline-none flex-shrink-0"
+            >
+              <span className="font-display font-black text-lg tracking-tighter bg-marvel text-white px-2 py-0.5 rounded italic">
+                MARVEL
+              </span>
+            </button>
+          )}
 
           {/* Desktop Navigation Links (Responsive) */}
           <div className="hidden md:flex items-center gap-1.5">
@@ -1346,10 +1361,10 @@ export default function App() {
                         setShowProfileDropdown(false);
                         handleLogout();
                       }}
-                      className="flex items-center gap-2.5 px-1 py-1.5 text-left text-xs font-sans font-semibold text-rose-500 hover:text-rose-400 transition-colors focus:outline-none cursor-pointer border-t border-neutral-900/60 bg-transparent border-0"
+                      className="flex items-center justify-between gap-2.5 px-1 py-1.5 text-left text-xs font-sans font-semibold text-rose-500 hover:text-rose-400 transition-colors focus:outline-none cursor-pointer border-t border-neutral-900/60 bg-transparent border-0 w-full"
                     >
+                      <span>Logout Session</span>
                       <LogOut className="w-4 h-4 text-rose-500" />
-                      Terminate Session
                     </button>
                   </div>
                 </>
@@ -1360,8 +1375,8 @@ export default function App() {
       </header>
 
       {/* CORE LAYOUT CANVAS */}
-      <main className="flex-1 w-full px-4 md:px-6 pt-20 md:pt-24 pb-20 md:pb-8 flex flex-col items-center">
-        <div className="w-full space-y-6 md:space-y-8">
+      <main className={`flex-1 w-full px-4 md:px-6 ${(activeTab === 'profile' || activeTab === 'settings') ? 'pt-16 md:pt-18 pb-16 md:pb-4' : 'pt-20 md:pt-24 pb-20 md:pb-8'} flex flex-col items-center`}>
+        <div className={`w-full ${(activeTab === 'profile' || activeTab === 'settings') ? 'space-y-4 md:space-y-5' : 'space-y-6 md:space-y-8'}`}>
           {selectedMovie ? (
             <DetailModal
               movie={selectedMovie}
