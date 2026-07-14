@@ -1287,20 +1287,9 @@ export async function updateUserFileAndIndex(
   token: string,
   chatId: string,
   userId: string,
-  updatedUserJson: UserJson,
-  options?: {
-    index?: UserIndex;
-    pinnedMessageId?: number | null;
-    oldUserJson?: UserJson;
-  }
+  updatedUserJson: UserJson
 ): Promise<void> {
-  let { index, pinnedMessageId } = options || {};
-  if (!index) {
-    const fetched = await fetchUserIndex(token, chatId, true, { userId });
-    index = fetched.index;
-    pinnedMessageId = fetched.pinnedMessageId;
-  }
-
+  const { index, pinnedMessageId } = await fetchUserIndex(token, chatId, true);
   const userEntryIndex = index.users.findIndex(u => u.userId === userId);
   if (userEntryIndex === -1) {
     throw new Error("User not found in index for update");
@@ -1321,21 +1310,19 @@ export async function updateUserFileAndIndex(
   }
 
   // Fetch current database state to perform a surgical partial update comparison
-  let oldUserJson = options?.oldUserJson;
-  if (!oldUserJson) {
-    try {
-      oldUserJson = await fetchUserFile(token, chatId, userId, false);
-    } catch (err) {
-      console.warn("Failed to fetch old user file for change detection, updating all:", err);
-      oldUserJson = {
-        userId,
-        fullName: "",
-        username: "",
-        createdAt: 0,
-        lastUpdated: 0,
-        sessions: [],
-      };
-    }
+  let oldUserJson: UserJson;
+  try {
+    oldUserJson = await fetchUserFile(token, chatId, userId, true);
+  } catch (err) {
+    console.warn("Failed to fetch old user file for change detection, updating all:", err);
+    oldUserJson = {
+      userId,
+      fullName: "",
+      username: "",
+      createdAt: 0,
+      lastUpdated: 0,
+      sessions: [],
+    };
   }
 
   const safeName = sanitizeNameForFilename(updatedUserJson.fullName);
@@ -1351,12 +1338,10 @@ export async function updateUserFileAndIndex(
     JSON.stringify(oldUserJson.sessions) !== JSON.stringify(updatedUserJson.sessions);
 
   // Progress document contains watch trackers, achievements, preferences, AND timeline updates ledger
-  const progressDocSubstantiveChanged = 
+  const progressChanged = 
     JSON.stringify(oldUserJson.watchData) !== JSON.stringify(updatedUserJson.watchData) ||
     JSON.stringify(oldUserJson.unlockedAchievements) !== JSON.stringify(updatedUserJson.unlockedAchievements) ||
-    JSON.stringify(oldUserJson.preferences) !== JSON.stringify(updatedUserJson.preferences);
-
-  const progressChanged = progressDocSubstantiveChanged ||
+    JSON.stringify(oldUserJson.preferences) !== JSON.stringify(updatedUserJson.preferences) ||
     JSON.stringify(oldUserJson.updates) !== JSON.stringify(updatedUserJson.updates);
 
   const updatePromises: Promise<any>[] = [];
@@ -1394,7 +1379,6 @@ export async function updateUserFileAndIndex(
   }
 
   // 2. Progress Document Update
-  let runProgressUpdateInBg = false;
   if (progressChanged) {
     const progressDoc = {
       userId: updatedUserJson.userId,
@@ -1406,12 +1390,7 @@ export async function updateUserFileAndIndex(
     const progressBuf = Buffer.from(encode(progressDoc));
     const progressFileName = `user_${safeName}_progress.msgpack`;
 
-    const isCriticalProgress = progressDocSubstantiveChanged || !userEntry.progressMessageId;
-
-    const runProgressUpdate = async () => {
-      let updatedProgressFileId = userEntry.progressFileId;
-      let updatedProgressMessageId = userEntry.progressMessageId;
-
+    updatePromises.push((async () => {
       if (userEntry.progressMessageId) {
         const updated = await updateTelegramBinaryFile(
           token,
@@ -1422,8 +1401,8 @@ export async function updateUserFileAndIndex(
           "application/x-msgpack",
           `🔗 Linked MCU Progress & Updates for ${updatedUserJson.fullName}`
         );
-        updatedProgressFileId = updated.fileId;
-        updatedProgressMessageId = updated.messageId;
+        userEntry.progressFileId = updated.fileId;
+        userEntry.progressMessageId = updated.messageId;
       } else {
         const uploaded = await uploadTelegramBinaryFile(
           token,
@@ -1434,36 +1413,10 @@ export async function updateUserFileAndIndex(
           `🔗 Linked MCU Progress & Updates for ${updatedUserJson.fullName}`,
           userEntry.authMessageId
         );
-        updatedProgressFileId = uploaded.fileId;
-        updatedProgressMessageId = uploaded.messageId;
+        userEntry.progressFileId = uploaded.fileId;
+        userEntry.progressMessageId = uploaded.messageId;
       }
-
-      if (!isCriticalProgress) {
-        await lockDatabase(async () => {
-          const { index: freshIndex, pinnedMessageId: freshPinnedId } = await fetchUserIndex(token, chatId, true, { userId });
-          const freshEntry = freshIndex.users.find(u => u.userId === userId);
-          if (freshEntry) {
-            freshEntry.progressFileId = updatedProgressFileId;
-            freshEntry.progressMessageId = updatedProgressMessageId;
-            freshEntry.progressLastUpdated = Date.now();
-            freshIndex.lastUpdated = Date.now();
-            await saveUserIndex(token, chatId, freshIndex, freshPinnedId);
-          }
-        });
-      } else {
-        userEntry.progressFileId = updatedProgressFileId;
-        userEntry.progressMessageId = updatedProgressMessageId;
-      }
-    };
-
-    if (isCriticalProgress) {
-      updatePromises.push(runProgressUpdate());
-    } else {
-      runProgressUpdateInBg = true;
-      runProgressUpdate().catch(err => {
-        console.error("Background progress update failed:", err);
-      });
-    }
+    })());
   }
 
   // 3. Clean up any leftover old 3-file sessions message to keep Telegram channel pristine
@@ -1487,27 +1440,29 @@ export async function updateUserFileAndIndex(
   // Execute updates in parallel
   if (updatePromises.length > 0) {
     await Promise.all(updatePromises);
-  }
 
-  userEntry.fullName = updatedUserJson.fullName || userEntry.fullName;
-  userEntry.username = updatedUserJson.username || userEntry.username;
-  userEntry.avatarFileId = updatedUserJson.avatarFileId;
-  userEntry.avatarMessageId = updatedUserJson.avatarMessageId;
-  if (updatedUserJson.avatarFileId) {
-    userEntry.avatarLastUpdated = updatedUserJson.lastUpdated || Date.now();
+    userEntry.fullName = updatedUserJson.fullName || userEntry.fullName;
+    userEntry.username = updatedUserJson.username || userEntry.username;
+    userEntry.avatarFileId = updatedUserJson.avatarFileId;
+    userEntry.avatarMessageId = updatedUserJson.avatarMessageId;
+    if (updatedUserJson.avatarFileId) {
+      userEntry.avatarLastUpdated = updatedUserJson.lastUpdated || Date.now();
+    } else {
+      userEntry.avatarLastUpdated = undefined;
+    }
+    if (authChanged) {
+      userEntry.authLastUpdated = Date.now();
+    }
+    if (progressChanged) {
+      userEntry.progressLastUpdated = Date.now();
+    }
+    index.lastUpdated = Date.now();
+
+    await saveUserIndex(token, chatId, index, pinnedMessageId);
+    console.log(`[Partial Update] Refined 2-File architecture successfully updated ${updatePromises.length} modified streams.`);
   } else {
-    userEntry.avatarLastUpdated = undefined;
+    console.log(`[Partial Update] Skipped update for user ${userId} since no document payloads were modified.`);
   }
-  if (authChanged) {
-    userEntry.authLastUpdated = Date.now();
-  }
-  if (progressChanged && !runProgressUpdateInBg) {
-    userEntry.progressLastUpdated = Date.now();
-  }
-  index.lastUpdated = Date.now();
-
-  await saveUserIndex(token, chatId, index, pinnedMessageId);
-  console.log(`[Partial Update] Refined 2-File architecture successfully updated ${updatePromises.length} modified streams.`);
 
   // Ensure the local cache is also fully updated and kept completely fresh
   userFileCache.set(userId, {

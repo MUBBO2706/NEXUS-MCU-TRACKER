@@ -535,7 +535,6 @@ app.get("/api/auth/status", (req, res) => {
       const resultUser = await telegramDb.lockDatabase(async () => {
         // Fetch user's individual JSON file
         const userFile = await telegramDb.fetchUserFile(token, chatId, decoded.userId, true);
-        const oldUserJsonCopy = JSON.parse(JSON.stringify(userFile));
 
         const oldWatchData = userFile.watchData || {};
         const oldAchievements = userFile.unlockedAchievements || [];
@@ -681,9 +680,7 @@ app.get("/api/auth/status", (req, res) => {
         userFile.lastUpdated = Date.now();
 
         // Write changes back to Telegram in-place
-        await telegramDb.updateUserFileAndIndex(token, chatId, decoded.userId, userFile, {
-          oldUserJson: oldUserJsonCopy
-        });
+        await telegramDb.updateUserFileAndIndex(token, chatId, decoded.userId, userFile);
         return userFile;
       });
 
@@ -736,7 +733,7 @@ app.get("/api/auth/status", (req, res) => {
 
       const resultUser = await telegramDb.lockDatabase(async () => {
         // Fetch User Index (optimized shard fetch)
-        const { index, pinnedMessageId } = await telegramDb.fetchUserIndex(token, chatId, true, { userId: decoded.userId });
+        const { index } = await telegramDb.fetchUserIndex(token, chatId, true, { userId: decoded.userId });
         const userEntryIndex = index.users.findIndex(u => u.userId === decoded.userId);
         if (userEntryIndex === -1) {
           throw new Error("User profile not found in index");
@@ -755,7 +752,6 @@ app.get("/api/auth/status", (req, res) => {
 
         // Fetch user JSON file
         const userFile = await telegramDb.fetchUserFile(token, chatId, decoded.userId, true);
-        const oldUserJsonCopy = JSON.parse(JSON.stringify(userFile));
 
         if (trimmedFullName && userFile.fullName !== trimmedFullName) {
           addUpdateLog(userFile, {
@@ -781,12 +777,21 @@ app.get("/api/auth/status", (req, res) => {
         }
         userFile.lastUpdated = Date.now();
 
-        // Save user file and index in a single optimized pass
-        await telegramDb.updateUserFileAndIndex(token, chatId, decoded.userId, userFile, {
-          index,
-          pinnedMessageId,
-          oldUserJson: oldUserJsonCopy
-        });
+        // Save user file (updates message ID, file ID)
+        await telegramDb.updateUserFileAndIndex(token, chatId, decoded.userId, userFile);
+
+        // Re-fetch index and explicitly update names & username in index entry (optimized shard fetch)
+        const { index: freshIndex, pinnedMessageId: freshPinnedId } = await telegramDb.fetchUserIndex(token, chatId, true, { userId: decoded.userId });
+        if (freshIndex.users) {
+          const idx = freshIndex.users.findIndex(u => u.userId === decoded.userId);
+          if (idx !== -1) {
+            if (trimmedFullName) freshIndex.users[idx].fullName = trimmedFullName;
+            if (trimmedUsername) freshIndex.users[idx].username = trimmedUsername;
+            freshIndex.users[idx].authLastUpdated = Date.now();
+            freshIndex.lastUpdated = Date.now();
+            await telegramDb.saveUserIndex(token, chatId, freshIndex, freshPinnedId);
+          }
+        }
         return userFile;
       });
 
@@ -863,7 +868,6 @@ app.get("/api/auth/status", (req, res) => {
       // Fetch, update with audit log, and save user file
       try {
         const userFile = await telegramDb.fetchUserFile(token, chatId, decoded.userId, true);
-        const oldUserJsonCopy = JSON.parse(JSON.stringify(userFile));
         addUpdateLog(userFile, {
           action: "Password Changed",
           previousValue: "********",
@@ -871,9 +875,7 @@ app.get("/api/auth/status", (req, res) => {
           source: "Settings",
           userPerformed: userFile.username,
         });
-        await telegramDb.updateUserFileAndIndex(token, chatId, decoded.userId, userFile, {
-          oldUserJson: oldUserJsonCopy
-        });
+        await telegramDb.updateUserFileAndIndex(token, chatId, decoded.userId, userFile);
       } catch (logErr) {
         console.warn("Audit log for password change failed, continuing:", logErr);
       }
@@ -1014,7 +1016,6 @@ app.get("/api/auth/status", (req, res) => {
 
       // Fetch existing user file
       const userFile = await telegramDb.fetchUserFile(token, chatId, decoded.userId, true);
-      const oldUserJsonCopy = JSON.parse(JSON.stringify(userFile));
 
       // Create structured caption metadata to store alongside profile picture
       const lastUpdatedIst = telegramDb.formatToIndianDateTime(new Date());
@@ -1095,9 +1096,7 @@ Last Updated: ${lastUpdatedIst}
       userFile.lastUpdated = Date.now();
 
       // Write updated user JSON back to Telegram
-      await telegramDb.updateUserFileAndIndex(token, chatId, decoded.userId, userFile, {
-        oldUserJson: oldUserJsonCopy
-      });
+      await telegramDb.updateUserFileAndIndex(token, chatId, decoded.userId, userFile);
 
       res.json({
         success: true,
