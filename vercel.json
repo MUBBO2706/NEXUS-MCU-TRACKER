@@ -1,7 +1,6 @@
 {
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index.ts" },
-    { "handle": "filesystem" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|assets/|characters/|.*\\..*).*)", "destination": "/index.html" }
   ]
 }
