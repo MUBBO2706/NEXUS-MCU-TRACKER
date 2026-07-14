@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { MCU_TITLES, MCU_QUOTES, MCU_TRIVIA } from './data/mcuData';
 import { UserWatchData, McuTitle } from './types';
@@ -67,6 +68,10 @@ export default function App() {
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
+
+  // Router hooks for URL synchronization
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // Check Backend configuration on mount and validate session if token exists
   useEffect(() => {
@@ -619,6 +624,150 @@ export default function App() {
     }
   };
 
+  // Bi-directional URL <-> State Sync: URL -> State (on mount and path changes)
+  useEffect(() => {
+    const path = location.pathname;
+    const segments = path.split('/').filter(Boolean);
+
+    if (segments.length === 0) {
+      setActiveTab('dashboard');
+      setSelectedMovieId(null);
+      setShowAllSessions(false);
+      setShowAllUpdates(false);
+      return;
+    }
+
+    const firstSegment = segments[0];
+    const validTabs = ['dashboard', 'movies', 'series', 'timeline', 'characters', 'analytics', 'profile', 'settings'];
+
+    if (validTabs.includes(firstSegment)) {
+      setActiveTab(firstSegment as any);
+      
+      if (firstSegment === 'profile') {
+        if (segments[1] === 'sessions') {
+          setShowAllSessions(true);
+          setShowAllUpdates(false);
+          setSelectedMovieId(null);
+        } else if (segments[1] === 'updates') {
+          setShowAllSessions(false);
+          setShowAllUpdates(true);
+          setSelectedMovieId(null);
+        } else if (segments[1]) {
+          setShowAllSessions(false);
+          setShowAllUpdates(false);
+          setSelectedMovieId(segments[1]);
+        } else {
+          setShowAllSessions(false);
+          setShowAllUpdates(false);
+          setSelectedMovieId(null);
+        }
+      } else if (segments[1]) {
+        setSelectedMovieId(segments[1]);
+      } else {
+        setSelectedMovieId(null);
+      }
+    } else if (firstSegment === 'details' && segments[1]) {
+      const movieId = segments[1];
+      setSelectedMovieId(movieId);
+      const titleInfo = MCU_TITLES.find(m => m.id === movieId);
+      if (titleInfo) {
+        setActiveTab(titleInfo.type === 'series' ? 'series' : 'movies');
+      } else {
+        setActiveTab('movies');
+      }
+    } else {
+      setActiveTab('dashboard');
+      setSelectedMovieId(null);
+      setShowAllSessions(false);
+      setShowAllUpdates(false);
+    }
+  }, [location.pathname]);
+
+  // Bi-directional URL <-> State Sync: State -> URL (on state changes)
+  useEffect(() => {
+    let targetPath = `/${activeTab}`;
+    if (activeTab === 'profile') {
+      if (showAllSessions) {
+        targetPath = '/profile/sessions';
+      } else if (showAllUpdates) {
+        targetPath = '/profile/updates';
+      }
+    }
+    if (selectedMovieId) {
+      targetPath = `/${activeTab}/${selectedMovieId}`;
+    }
+
+    if (location.pathname !== targetPath) {
+      navigate(targetPath);
+    }
+  }, [activeTab, selectedMovieId, showAllSessions, showAllUpdates, navigate, location.pathname]);
+
+  // Scroll Position Persistence: Save scroll positions on scroll
+  useEffect(() => {
+    let isTracking = false;
+
+    const handleScroll = () => {
+      if (isTracking) return;
+      isTracking = true;
+
+      window.requestAnimationFrame(() => {
+        const scrollY = window.scrollY;
+        const currentPath = window.location.pathname;
+
+        if (currentPath) {
+          try {
+            const savedScrollsStr = localStorage.getItem('mcu_scroll_positions') || '{}';
+            const savedScrolls = JSON.parse(savedScrollsStr);
+            savedScrolls[currentPath] = scrollY;
+            localStorage.setItem('mcu_scroll_positions', JSON.stringify(savedScrolls));
+          } catch (e) {
+            console.warn('Failed to save scroll position:', e);
+          }
+        }
+        isTracking = false;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  // Scroll Position Persistence: Restore scroll positions on pathname change
+  useEffect(() => {
+    const currentPath = location.pathname;
+    try {
+      const savedScrollsStr = localStorage.getItem('mcu_scroll_positions');
+      if (savedScrollsStr) {
+        const savedScrolls = JSON.parse(savedScrollsStr);
+        const targetScrollY = savedScrolls[currentPath] || 0;
+
+        const restore = () => {
+          window.scrollTo({
+            top: targetScrollY,
+            behavior: 'instant' as any
+          });
+        };
+
+        restore();
+
+        const timers = [
+          setTimeout(restore, 30),
+          setTimeout(restore, 100),
+          setTimeout(restore, 250),
+          setTimeout(restore, 500)
+        ];
+
+        return () => {
+          timers.forEach(clearTimeout);
+        };
+      }
+    } catch (e) {
+      console.warn('Failed to restore scroll position:', e);
+    }
+  }, [location.pathname]);
+
   const handleSetUnlockedAchievements = (
     next: string[] | ((prev: string[]) => string[])
   ) => {
@@ -1095,7 +1244,7 @@ export default function App() {
       setFavoritePhase('');
       setFavoriteCharacter('');
       setDeveloperMode(false);
-      location.reload();
+      window.location.reload();
     }
   };
 

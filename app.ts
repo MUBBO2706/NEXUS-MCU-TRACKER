@@ -246,6 +246,52 @@ app.get("/api/auth/status", (req, res) => {
         timestamp: nowMs
       });
 
+      // Data Migration Logs
+      if (initialData?.watchData && Object.keys(initialData.watchData).length > 0) {
+        const count = Object.keys(initialData.watchData).length;
+        addUpdateLog(userJson, {
+          action: "Watch History Migrated",
+          previousValue: "N/A",
+          newValue: `${count} title progress log(s) successfully migrated`,
+          source: "Account",
+          userPerformed: trimmedUsername,
+          metadata: { count },
+          timestamp: nowMs + 1
+        });
+      }
+
+      if (initialData?.unlockedAchievements && initialData.unlockedAchievements.length > 0) {
+        const count = initialData.unlockedAchievements.length;
+        addUpdateLog(userJson, {
+          action: "Achievements Migrated",
+          previousValue: "N/A",
+          newValue: `${count} S.H.I.E.L.D. achievement(s) successfully migrated`,
+          source: "Account",
+          userPerformed: trimmedUsername,
+          metadata: { count },
+          timestamp: nowMs + 2
+        });
+      }
+
+      if (initialData?.preferences && Object.keys(initialData.preferences).length > 0) {
+        const p = initialData.preferences;
+        const details = [];
+        if (p.theme) details.push(`Theme: ${p.theme}`);
+        if (p.favPhase) details.push(`Favorite Phase: Phase ${p.favPhase}`);
+        if (p.favChar) details.push(`Favorite Character: ${p.favChar}`);
+        if (p.devMode) details.push(`Developer Mode: Enabled`);
+
+        addUpdateLog(userJson, {
+          action: "Preferences Migrated",
+          previousValue: "N/A",
+          newValue: details.length > 0 ? details.join(" | ") : "User preferences successfully migrated",
+          source: "Account",
+          userPerformed: trimmedUsername,
+          metadata: p,
+          timestamp: nowMs + 3
+        });
+      }
+
       // Add user metadata to the User Index lookup table
       const salt = telegramDb.generateSalt();
       const passwordHash = telegramDb.hashPassword(password, salt);
