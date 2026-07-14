@@ -176,20 +176,19 @@ export function parseUserAgent(userAgentString: string | undefined): { browser: 
 // Lazy configurations and validation
 export function getTelegramConfig() {
   const token = process.env.TELEGRAM_BOT_TOKEN || process.env.STORAGE_ACCESS_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID || process.env.STORAGE_CHAT_ID;
-  const authChannelId = process.env.TELEGRAM_AUTH_CHANNEL_ID || process.env.STORAGE_AUTH_CHANNEL_ID || chatId;
-  const storageChannelId = process.env.TELEGRAM_STORAGE_CHANNEL_ID || process.env.STORAGE_STORAGE_CHANNEL_ID || chatId;
+  const storageChannelId = process.env.TELEGRAM_STORAGE_CHANNEL_ID || process.env.STORAGE_STORAGE_CHANNEL_ID;
+  const authChannelId = process.env.TELEGRAM_AUTH_CHANNEL_ID || process.env.STORAGE_AUTH_CHANNEL_ID || storageChannelId;
 
-  if (!token || (!chatId && !authChannelId && !storageChannelId)) {
+  if (!token || (!storageChannelId && !authChannelId)) {
     throw new Error("TELEGRAM_NOT_CONFIGURED");
   }
 
   const secret = process.env.JWT_SECRET || "default_super_secret_mcu_timeline_key_12345_67890";
   return {
     token,
-    chatId: storageChannelId || chatId,
-    authChannelId: authChannelId || chatId || storageChannelId,
-    storageChannelId: storageChannelId || chatId,
+    chatId: storageChannelId,
+    authChannelId: authChannelId || storageChannelId,
+    storageChannelId: storageChannelId,
     secret
   };
 }
