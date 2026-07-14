@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import * as telegramDb from "./backend/telegramDb.js";
+import * as telegramCharacterImages from "./backend/telegramCharacterImages.js";
 import crypto from "crypto";
 import { MCU_TITLES } from "./src/data/mcuData.js";
 import dotenv from "dotenv";
@@ -196,12 +197,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-
-// Serve character images from local public or dist directories, supporting Vercel and local dev
-app.use("/characters", express.static(path.join(process.cwd(), "public/characters")));
-app.use("/characters", express.static(path.join(process.cwd(), "dist/characters")));
-app.use("/api/characters", express.static(path.join(process.cwd(), "public/characters")));
-app.use("/api/characters", express.static(path.join(process.cwd(), "dist/characters")));
 
 // Check Telegram database connection configuration status
 app.get("/api/auth/status", (req, res) => {
@@ -1264,6 +1259,22 @@ Last Updated: ${lastUpdatedIst}
   app.get("/api/image-proxy", async (req, res) => {
     const url = req.query.url as string;
     const characterId = req.query.characterId as string;
+
+    // Try to resolve character portraits directly from the Telegram Character Repository
+    const charFilename = telegramCharacterImages.getCharacterFilename(characterId, url);
+    if (charFilename) {
+      try {
+        const imageResult = await telegramCharacterImages.getCharacterImage(charFilename);
+        if (imageResult) {
+          res.setHeader("Content-Type", imageResult.contentType);
+          res.setHeader("Cache-Control", "public, max-age=604800, immutable"); // Cache for 7 days
+          return res.send(imageResult.bytes);
+        }
+      } catch (err: any) {
+        console.warn(`[Telegram Character Repo] Failed to serve character portrait for ${charFilename} from Telegram (falling back to external):`, err.message);
+      }
+    }
+
     if (!url) {
       return res.status(400).send("URL parameter is required");
     }
