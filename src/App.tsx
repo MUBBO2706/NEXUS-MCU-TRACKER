@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { MCU_TITLES, MCU_QUOTES, MCU_TRIVIA } from './data/mcuData';
@@ -47,11 +47,7 @@ import { triggerConfettiParticles } from './utils/confetti';
 import { useCountdown } from './hooks/useCountdown';
 
 export default function App() {
-  // Navigation
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'movies' | 'series' | 'timeline' | 'characters' | 'analytics' | 'profile' | 'settings'>('dashboard');
-
   // Session Registry Page States
-  const [showAllSessions, setShowAllSessions] = useState<boolean>(false);
   const [sessionSearchQuery, setSessionSearchQuery] = useState('');
   const [sessionFilterStatus, setSessionFilterStatus] = useState<'all' | 'Active' | 'Logged Out' | 'Expired'>('all');
   const [sessionPage, setSessionPage] = useState(1);
@@ -72,6 +68,76 @@ export default function App() {
   // Router hooks for URL synchronization
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Derive state from path instantly during render phase to eliminate flickering & delay
+  const path = location.pathname;
+  const segments = path.split('/').filter(Boolean);
+
+  let activeTab: 'dashboard' | 'movies' | 'series' | 'timeline' | 'characters' | 'analytics' | 'profile' | 'settings' = 'dashboard';
+  let selectedMovieId: string | null = null;
+  let showAllSessions = false;
+  let showAllUpdates = false;
+
+  if (segments.length > 0) {
+    const firstSegment = segments[0];
+    const validTabs = ['dashboard', 'movies', 'series', 'timeline', 'characters', 'analytics', 'profile', 'settings'];
+
+    if (validTabs.includes(firstSegment)) {
+      activeTab = firstSegment as any;
+      if (firstSegment === 'profile') {
+        if (segments[1] === 'sessions') {
+          showAllSessions = true;
+        } else if (segments[1] === 'updates') {
+          showAllUpdates = true;
+        } else if (segments[1]) {
+          selectedMovieId = segments[1];
+        }
+      } else if (segments[1]) {
+        selectedMovieId = segments[1];
+      }
+    } else if (firstSegment === 'details' && segments[1]) {
+      selectedMovieId = segments[1];
+      const titleInfo = MCU_TITLES.find(m => m.id === selectedMovieId);
+      if (titleInfo) {
+        activeTab = titleInfo.type === 'series' ? 'series' : 'movies';
+      } else {
+        activeTab = 'movies';
+      }
+    }
+  }
+
+  // Exact set-state compatible wrapper functions to trigger instantaneous navigation
+  const setActiveTab = (tabOrFunc: any) => {
+    const tab = typeof tabOrFunc === 'function' ? tabOrFunc(activeTab) : tabOrFunc;
+    navigate(`/${tab}`);
+  };
+
+  const setSelectedMovieId = (idOrFunc: string | null | ((prev: string | null) => string | null)) => {
+    const id = typeof idOrFunc === 'function' ? idOrFunc(selectedMovieId) : idOrFunc;
+    if (id) {
+      navigate(`/${activeTab}/${id}`);
+    } else {
+      navigate(`/${activeTab}`);
+    }
+  };
+
+  const setShowAllSessions = (show: boolean | ((prev: boolean) => boolean)) => {
+    const nextShow = typeof show === 'function' ? show(showAllSessions) : show;
+    if (nextShow) {
+      navigate('/profile/sessions');
+    } else {
+      navigate('/profile');
+    }
+  };
+
+  const setShowAllUpdates = (show: boolean | ((prev: boolean) => boolean)) => {
+    const nextShow = typeof show === 'function' ? show(showAllUpdates) : show;
+    if (nextShow) {
+      navigate('/profile/updates');
+    } else {
+      navigate('/profile');
+    }
+  };
 
   // Check Backend configuration on mount and validate session if token exists
   useEffect(() => {
@@ -392,9 +458,6 @@ export default function App() {
     };
   }, []);
 
-  // Selection for Detail Modal
-  const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
-
   // Search & Filters state
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -450,7 +513,6 @@ export default function App() {
   const [timelineMode, setTimelineMode] = useState<'timeline' | 'release'>('release');
 
   // Updates History Page States
-  const [showAllUpdates, setShowAllUpdates] = useState<boolean>(false);
   const [updatesSearchQuery, setUpdatesSearchQuery] = useState('');
   const [updatesFilterCategory, setUpdatesFilterCategory] = useState<string>('all');
   const [updatesSortOrder, setUpdatesSortOrder] = useState<'newest' | 'oldest' | 'action-asc' | 'action-desc'>('newest');
@@ -624,84 +686,6 @@ export default function App() {
     }
   };
 
-  // Bi-directional URL <-> State Sync: URL -> State (on mount and path changes)
-  useEffect(() => {
-    const path = location.pathname;
-    const segments = path.split('/').filter(Boolean);
-
-    if (segments.length === 0) {
-      setActiveTab('dashboard');
-      setSelectedMovieId(null);
-      setShowAllSessions(false);
-      setShowAllUpdates(false);
-      return;
-    }
-
-    const firstSegment = segments[0];
-    const validTabs = ['dashboard', 'movies', 'series', 'timeline', 'characters', 'analytics', 'profile', 'settings'];
-
-    if (validTabs.includes(firstSegment)) {
-      setActiveTab(firstSegment as any);
-      
-      if (firstSegment === 'profile') {
-        if (segments[1] === 'sessions') {
-          setShowAllSessions(true);
-          setShowAllUpdates(false);
-          setSelectedMovieId(null);
-        } else if (segments[1] === 'updates') {
-          setShowAllSessions(false);
-          setShowAllUpdates(true);
-          setSelectedMovieId(null);
-        } else if (segments[1]) {
-          setShowAllSessions(false);
-          setShowAllUpdates(false);
-          setSelectedMovieId(segments[1]);
-        } else {
-          setShowAllSessions(false);
-          setShowAllUpdates(false);
-          setSelectedMovieId(null);
-        }
-      } else if (segments[1]) {
-        setSelectedMovieId(segments[1]);
-      } else {
-        setSelectedMovieId(null);
-      }
-    } else if (firstSegment === 'details' && segments[1]) {
-      const movieId = segments[1];
-      setSelectedMovieId(movieId);
-      const titleInfo = MCU_TITLES.find(m => m.id === movieId);
-      if (titleInfo) {
-        setActiveTab(titleInfo.type === 'series' ? 'series' : 'movies');
-      } else {
-        setActiveTab('movies');
-      }
-    } else {
-      setActiveTab('dashboard');
-      setSelectedMovieId(null);
-      setShowAllSessions(false);
-      setShowAllUpdates(false);
-    }
-  }, [location.pathname]);
-
-  // Bi-directional URL <-> State Sync: State -> URL (on state changes)
-  useEffect(() => {
-    let targetPath = `/${activeTab}`;
-    if (activeTab === 'profile') {
-      if (showAllSessions) {
-        targetPath = '/profile/sessions';
-      } else if (showAllUpdates) {
-        targetPath = '/profile/updates';
-      }
-    }
-    if (selectedMovieId) {
-      targetPath = `/${activeTab}/${selectedMovieId}`;
-    }
-
-    if (location.pathname !== targetPath) {
-      navigate(targetPath);
-    }
-  }, [activeTab, selectedMovieId, showAllSessions, showAllUpdates, navigate, location.pathname]);
-
   // Scroll Position Persistence: Save scroll positions on scroll
   useEffect(() => {
     let isTracking = false;
@@ -734,35 +718,35 @@ export default function App() {
     };
   }, []);
 
-  // Scroll Position Persistence: Restore scroll positions on pathname change
-  useEffect(() => {
+  // Scroll Position Persistence: Restore scroll positions on pathname change with useLayoutEffect to prevent any visible jump or flicker
+  useLayoutEffect(() => {
     const currentPath = location.pathname;
     try {
       const savedScrollsStr = localStorage.getItem('mcu_scroll_positions');
+      let targetScrollY = 0;
       if (savedScrollsStr) {
         const savedScrolls = JSON.parse(savedScrollsStr);
-        const targetScrollY = savedScrolls[currentPath] || 0;
-
-        const restore = () => {
-          window.scrollTo({
-            top: targetScrollY,
-            behavior: 'instant' as any
-          });
-        };
-
-        restore();
-
-        const timers = [
-          setTimeout(restore, 30),
-          setTimeout(restore, 100),
-          setTimeout(restore, 250),
-          setTimeout(restore, 500)
-        ];
-
-        return () => {
-          timers.forEach(clearTimeout);
-        };
+        targetScrollY = savedScrolls[currentPath] || 0;
       }
+
+      const restore = () => {
+        window.scrollTo({
+          top: targetScrollY,
+          behavior: 'instant' as any
+        });
+      };
+
+      restore();
+
+      const timers = [
+        setTimeout(restore, 16),
+        setTimeout(restore, 80),
+        setTimeout(restore, 200)
+      ];
+
+      return () => {
+        timers.forEach(clearTimeout);
+      };
     } catch (e) {
       console.warn('Failed to restore scroll position:', e);
     }
