@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index.ts" },
+    { "source": "/characters/:path*", "destination": "/api/index.ts" },
     { "source": "/((?!api/|assets/|characters/|.*\\..*).*)", "destination": "/index.html" }
   ]
 }

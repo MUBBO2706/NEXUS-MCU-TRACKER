@@ -197,6 +197,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serve character images from local public or dist directories, supporting Vercel and local dev
+app.use("/characters", express.static(path.join(process.cwd(), "public/characters")));
+app.use("/characters", express.static(path.join(process.cwd(), "dist/characters")));
+app.use("/api/characters", express.static(path.join(process.cwd(), "public/characters")));
+app.use("/api/characters", express.static(path.join(process.cwd(), "dist/characters")));
+
 // Check Telegram database connection configuration status
 app.get("/api/auth/status", (req, res) => {
     try {
