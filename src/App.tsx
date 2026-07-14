@@ -806,9 +806,10 @@ export default function App() {
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          setAvatarUrl(data.avatarUrl);
+          const timestampedUrl = `${data.avatarUrl}${data.avatarUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+          setAvatarUrl(timestampedUrl);
           if (user) {
-            setUser((prev: any) => prev ? { ...prev, avatarUrl: data.avatarUrl } : null);
+            setUser((prev: any) => prev ? { ...prev, avatarUrl: timestampedUrl } : null);
           }
           showFeedback('Profile photo updated successfully!', 'success');
         } else {

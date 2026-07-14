@@ -171,25 +171,27 @@ export function ProfileTab({
                 </button>
               )}
               {authToken && isEditingProfileInPlace && (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsEditingProfileInPlace(false);
-                      setNewFullName('');
-                      setNewUsername('');
-                    }}
-                    className="text-neutral-400 hover:text-neutral-200 transition-colors focus:outline-none cursor-pointer bg-transparent border-0 p-0 min-h-0 rounded-none md:bg-neutral-900 md:hover:bg-neutral-800 md:hover:text-white md:border md:border-neutral-800 md:rounded-lg md:px-4 md:py-2.5 md:min-h-[42px] flex items-center justify-center gap-2 text-xs font-mono uppercase tracking-wider touch-manipulation"
-                    title="Cancel"
-                  >
-                    <X className="w-4 h-4 shrink-0" />
-                    <span className="hidden md:inline">Cancel</span>
-                  </button>
+                <div className="flex items-center gap-3">
+                  {!isUpdatingProfile && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingProfileInPlace(false);
+                        setNewFullName('');
+                        setNewUsername('');
+                      }}
+                      className="text-neutral-400 hover:text-neutral-200 md:hover:text-white transition-colors focus:outline-none cursor-pointer bg-transparent border-0 p-0 min-h-0 rounded-none flex items-center justify-center gap-2 text-xs font-mono uppercase tracking-wider touch-manipulation"
+                      title="Cancel"
+                    >
+                      <X className="w-4 h-4 shrink-0" />
+                      <span className="hidden md:inline">Cancel</span>
+                    </button>
+                  )}
                   <button
                     type="submit"
                     form="profile-form"
                     disabled={isUpdatingProfile}
-                    className="text-emerald-400 hover:text-emerald-300 disabled:opacity-50 transition-colors focus:outline-none cursor-pointer bg-transparent border-0 p-0 min-h-0 rounded-none md:bg-emerald-500/10 md:hover:bg-emerald-500/20 md:border md:border-emerald-500/20 md:rounded-lg md:px-4 md:py-2.5 md:min-h-[42px] flex items-center justify-center gap-2 text-xs font-mono uppercase tracking-wider touch-manipulation font-bold"
+                    className="text-emerald-400 hover:text-emerald-300 md:hover:text-emerald-200 disabled:opacity-50 transition-colors focus:outline-none cursor-pointer bg-transparent border-0 p-0 min-h-0 rounded-none flex items-center justify-center gap-2 text-xs font-mono uppercase tracking-wider touch-manipulation font-bold"
                     title="Save Changes"
                   >
                     {isUpdatingProfile ? (

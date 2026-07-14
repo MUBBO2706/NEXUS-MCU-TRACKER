@@ -77,10 +77,6 @@ export function DashboardTab({
         {/* Header Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 z-10 pb-3 border-b border-red-950/20">
           <div className="flex flex-col text-left">
-            <span className="text-[9px] uppercase tracking-wider text-red-400 font-bold font-mono flex items-center gap-1">
-              <Shield className="w-2.5 h-2.5 text-red-500" />
-              S.H.I.E.L.D. Chrono-Monitor
-            </span>
             <h3 className="font-display font-bold text-xs text-neutral-200 tracking-wide uppercase">
               MULTIVERSE INCURSION CRITICAL
             </h3>

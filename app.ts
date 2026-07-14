@@ -1156,7 +1156,9 @@ Last Updated: ${lastUpdatedIst}
         else if (ext === ".webp") contentType = "image/webp";
 
         res.setHeader("Content-Type", contentType);
-        res.setHeader("Cache-Control", "public, max-age=86400"); // Cache for 1 day
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
         return res.send(buffer);
       }
 
@@ -1169,7 +1171,9 @@ Last Updated: ${lastUpdatedIst}
           const base64Content = matches[2];
           const buffer = Buffer.from(base64Content, "base64");
           res.setHeader("Content-Type", contentType);
-          res.setHeader("Cache-Control", "public, max-age=86400"); // Cache for 1 day
+          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+          res.setHeader("Pragma", "no-cache");
+          res.setHeader("Expires", "0");
           return res.send(buffer);
         }
       }
