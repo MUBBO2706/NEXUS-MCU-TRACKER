@@ -462,18 +462,51 @@ export default function App() {
       if (savedUpdates) {
         setSandboxUpdates(JSON.parse(savedUpdates));
       } else if (isOfflineSandbox) {
-        const initialSandboxUpdate = {
-          id: 'sandbox-initial',
-          timestamp: Date.now(),
-          action: 'Account Created',
-          previousValue: 'N/A',
-          newValue: 'Sandbox session successfully initialized',
-          source: 'Account',
-          userPerformed: 'sandbox_agent',
-          metadata: {}
-        };
-        setSandboxUpdates([initialSandboxUpdate]);
-        localStorage.setItem('mcu_updates_history', JSON.stringify([initialSandboxUpdate]));
+        const now = Date.now();
+        const initialSandboxUpdates = [
+          {
+            id: 'sandbox-key',
+            timestamp: now,
+            action: 'Password',
+            previousValue: 'N/A',
+            newValue: '••••••••',
+            source: 'Account',
+            userPerformed: 'sandbox_agent',
+            metadata: {}
+          },
+          {
+            id: 'sandbox-username',
+            timestamp: now - 1000,
+            action: 'Username',
+            previousValue: 'N/A',
+            newValue: 'sandbox_agent',
+            source: 'Account',
+            userPerformed: 'sandbox_agent',
+            metadata: {}
+          },
+          {
+            id: 'sandbox-name',
+            timestamp: now - 2000,
+            action: 'Full Name',
+            previousValue: 'N/A',
+            newValue: 'Local Agent Elite',
+            source: 'Account',
+            userPerformed: 'sandbox_agent',
+            metadata: {}
+          },
+          {
+            id: 'sandbox-initial',
+            timestamp: now - 3000,
+            action: 'Account Created',
+            previousValue: 'N/A',
+            newValue: 'Account successfully created',
+            source: 'Account',
+            userPerformed: 'sandbox_agent',
+            metadata: {}
+          }
+        ];
+        setSandboxUpdates(initialSandboxUpdates);
+        localStorage.setItem('mcu_updates_history', JSON.stringify(initialSandboxUpdates));
       }
     } catch (e) {
       console.error('LocalStorage load for updates failed', e);

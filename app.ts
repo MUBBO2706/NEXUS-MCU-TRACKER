@@ -76,6 +76,7 @@ function addUpdateLog(userJson: any, log: {
   source: string;
   userPerformed: string;
   metadata?: any;
+  timestamp?: number;
 }) {
   if (!userJson.updates) {
     userJson.updates = [];
@@ -204,13 +205,45 @@ app.get("/api/auth/status", (req, res) => {
         avatarUrl: "",
       };
 
+      const nowMs = Date.now();
+
       addUpdateLog(userJson, {
         action: "Account Created",
         previousValue: "N/A",
-        newValue: "Account successfully created and initialized",
+        newValue: "Account successfully created",
         source: "Account",
         userPerformed: trimmedUsername,
-        metadata: { username: trimmedUsername, fullName: trimmedFullName }
+        metadata: { username: trimmedUsername, fullName: trimmedFullName },
+        timestamp: nowMs - 3
+      });
+
+      addUpdateLog(userJson, {
+        action: "Full Name",
+        previousValue: "N/A",
+        newValue: trimmedFullName,
+        source: "Account",
+        userPerformed: trimmedUsername,
+        metadata: { fullName: trimmedFullName },
+        timestamp: nowMs - 2
+      });
+
+      addUpdateLog(userJson, {
+        action: "Username",
+        previousValue: "N/A",
+        newValue: trimmedUsername,
+        source: "Account",
+        userPerformed: trimmedUsername,
+        metadata: { username: trimmedUsername },
+        timestamp: nowMs - 1
+      });
+
+      addUpdateLog(userJson, {
+        action: "Password",
+        previousValue: "N/A",
+        newValue: "••••••••",
+        source: "Account",
+        userPerformed: trimmedUsername,
+        timestamp: nowMs
       });
 
       // Add user metadata to the User Index lookup table
