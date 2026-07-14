@@ -103,13 +103,13 @@ export const CharacterHub: React.FC<CharacterHubProps> = ({ onSelectMovie }) => 
           <span className="text-xs text-neutral-500 font-mono">No matching characters found in the Codex records</span>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-6 gap-y-4">
+        <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-x-6">
           {filteredCharacters.map((char) => {
             const isExpanded = selectedCharId === char.id;
             return (
               <div
                 key={char.id}
-                className="overflow-hidden transition-all duration-300 border-b border-neutral-900/60 pb-2"
+                className="break-inside-avoid inline-block w-full overflow-hidden transition-all duration-300 border-b border-neutral-900/60 pb-2 mb-4"
               >
                 {/* Header block click */}
                 <button

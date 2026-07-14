@@ -24,7 +24,7 @@ export function TimelineTab({
           <Calendar className="text-marvel w-6 h-6" />
           Cosmic Timeline Nexus
         </h2>
-        <div className="grid grid-cols-2 gap-2 bg-neutral-950 p-1.5 rounded-2xl border border-neutral-800">
+        <div className="grid grid-cols-2 md:inline-flex md:w-auto md:self-start gap-2 bg-neutral-950 p-1.5 rounded-2xl border border-neutral-800">
           <button
             onClick={() => {
               setTimelineMode('timeline');

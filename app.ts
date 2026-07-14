@@ -43,6 +43,42 @@ const CHARACTER_ALTERNATIVES: Record<string, string[]> = {
   "spiderman": [
     "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Tom_Holland_during_pro-am_Wentworth_golf_club_2023-2_%28cropped%29.jpg/500px-Tom_Holland_during_pro-am_Wentworth_golf_club_2023-2_%28cropped%29.jpg",
     "https://images.unsplash.com/photo-1604200213928-ba3cf4fc8436?q=80&w=400"
+  ],
+  "blackwidow": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Scarlett_Johansson_by_Gage_Skidmore_2.jpg/500px-Scarlett_Johansson_by_Gage_Skidmore_2.jpg",
+    "https://images.unsplash.com/photo-1594744803329-e58b31de215f?q=80&w=400"
+  ],
+  "hulk": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Mark_Ruffalo_2017_by_Gage_Skidmore_2.jpg/500px-Mark_Ruffalo_2017_by_Gage_Skidmore_2.jpg",
+    "https://images.unsplash.com/photo-1608889174633-41a2c237b6b1?q=80&w=400"
+  ],
+  "hawkeye": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Jeremy_Renner_by_Gage_Skidmore_2014.jpg/500px-Jeremy_Renner_by_Gage_Skidmore_2014.jpg",
+    "https://images.unsplash.com/photo-1511367461989-f85a21fda167?q=80&w=400"
+  ],
+  "starlord": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Chris_Pratt_2018_by_Gage_Skidmore.jpg/500px-Chris_Pratt_2018_by_Gage_Skidmore.jpg",
+    "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=400"
+  ],
+  "doctorstrange": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Benedict_Cumberbatch_by_Gage_Skidmore_5.jpg/500px-Benedict_Cumberbatch_by_Gage_Skidmore_5.jpg",
+    "https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?q=80&w=400"
+  ],
+  "blackpanther": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Chadwick_Boseman_by_Gage_Skidmore.jpg/500px-Chadwick_Boseman_by_Gage_Skidmore.jpg",
+    "https://images.unsplash.com/photo-1509281373149-e957c6296406?q=80&w=400"
+  ],
+  "captainmarvel": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Brie_Larson_by_Gage_Skidmore_4.jpg/500px-Brie_Larson_by_Gage_Skidmore_4.jpg",
+    "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=400"
+  ],
+  "antman": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Paul_Rudd_2019_by_Gage_Skidmore.jpg/500px-Paul_Rudd_2019_by_Gage_Skidmore.jpg",
+    "https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=400"
+  ],
+  "thanos": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Josh_Brolin_by_Gage_Skidmore_2.jpg/500px-Josh_Brolin_by_Gage_Skidmore_2.jpg",
+    "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=400"
   ]
 };
 
@@ -66,6 +102,39 @@ const ALTERNATIVE_URLS: Record<string, string[]> = {
   "Spider-Man": [
     "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Tom_Holland_during_pro-am_Wentworth_golf_club_2023-2_%28cropped%29.jpg/500px-Tom_Holland_during_pro-am_Wentworth_golf_club_2023-2_%28cropped%29.jpg",
     "https://images.unsplash.com/photo-1604200213928-ba3cf4fc8436?q=80&w=400"
+  ],
+  "Scarlet_Johansson": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Scarlett_Johansson_by_Gage_Skidmore_2.jpg/500px-Scarlett_Johansson_by_Gage_Skidmore_2.jpg"
+  ],
+  "Scarlett_Johansson": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Scarlett_Johansson_by_Gage_Skidmore_2.jpg/500px-Scarlett_Johansson_by_Gage_Skidmore_2.jpg"
+  ],
+  "Bruce_Banner": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Mark_Ruffalo_2017_by_Gage_Skidmore_2.jpg/500px-Mark_Ruffalo_2017_by_Gage_Skidmore_2.jpg"
+  ],
+  "Clint_Barton": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Jeremy_Renner_by_Gage_Skidmore_2014.jpg/500px-Jeremy_Renner_by_Gage_Skidmore_2014.jpg"
+  ],
+  "Star-Lord": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Chris_Pratt_2018_by_Gage_Skidmore.jpg/500px-Chris_Pratt_2018_by_Gage_Skidmore.jpg"
+  ],
+  "Doctor_Strange": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Benedict_Cumberbatch_by_Gage_Skidmore_5.jpg/500px-Benedict_Cumberbatch_by_Gage_Skidmore_5.jpg"
+  ],
+  "Stephen_Strange": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Benedict_Cumberbatch_by_Gage_Skidmore_5.jpg/500px-Benedict_Cumberbatch_by_Gage_Skidmore_5.jpg"
+  ],
+  "Black_Panther": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Chadwick_Boseman_by_Gage_Skidmore.jpg/500px-Chadwick_Boseman_by_Gage_Skidmore.jpg"
+  ],
+  "Captain_Marvel": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Brie_Larson_by_Gage_Skidmore_4.jpg/500px-Brie_Larson_by_Gage_Skidmore_4.jpg"
+  ],
+  "Ant-Man": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Paul_Rudd_2019_by_Gage_Skidmore.jpg/500px-Paul_Rudd_2019_by_Gage_Skidmore.jpg"
+  ],
+  "Thanos": [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Josh_Brolin_by_Gage_Skidmore_2.jpg/500px-Josh_Brolin_by_Gage_Skidmore_2.jpg"
   ]
 };
 
