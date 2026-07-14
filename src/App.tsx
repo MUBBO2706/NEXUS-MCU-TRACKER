@@ -1225,9 +1225,6 @@ export default function App() {
             <span className="font-display font-black text-lg tracking-tighter bg-marvel text-white px-2 py-0.5 rounded italic">
               MARVEL
             </span>
-            <span className="font-sans font-bold text-xs text-neutral-400 tracking-widest uppercase hidden sm:inline">
-              COMPANION
-            </span>
           </button>
 
           {/* Desktop Navigation Links (Responsive) */}
@@ -1251,14 +1248,17 @@ export default function App() {
                     setShowAllSessions(false);
                     setActiveTab(item.tab as any);
                   }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold tracking-tight transition-all focus:outline-none ${
+                  className={`relative flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold tracking-tight transition-colors focus:outline-none cursor-pointer ${
                     isActive
-                      ? 'bg-marvel text-white shadow-md'
-                      : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
+                      ? 'text-marvel font-bold'
+                      : 'text-neutral-400 hover:text-white'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
                   <span>{item.label}</span>
+                  {isActive && (
+                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-marvel rounded-full" />
+                  )}
                 </button>
               );
             })}

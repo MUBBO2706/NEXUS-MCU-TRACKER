@@ -6,29 +6,21 @@ export function renderLogValue(log: any, isNew: boolean, userId?: string) {
   const isPhotoUpdate = log.action === "Profile Photo Updated" || log.action?.toLowerCase().includes("profile photo") || log.action?.toLowerCase().includes("avatar");
   
   if (isPhotoUpdate) {
+    let val = isNew ? log.newValue : log.previousValue;
+    if (typeof val === 'string') {
+      val = val.replace(/^(Old Value|New Value):\s*/i, '').replace(/\*\*|"/g, '').trim();
+    }
+    const displayVal = (val === undefined || val === null || val === "" || val === "N/A" || val === "Default") ? "No Avatar" : val;
     if (isNew) {
-      const url = userId ? `/api/user/avatar?userId=${userId}` : "";
-      const displayUrl = url || "New Custom Photo";
       return (
-        <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-semibold font-mono">
-          {url && (
-            <img 
-              src={url} 
-              alt="Avatar" 
-              className="w-4 h-4 rounded-full border border-emerald-500/30 object-cover" 
-              onError={(e) => { (e.target as any).style.display = 'none'; }} 
-              referrerPolicy="no-referrer" 
-            />
-          )}
-          <span>{displayUrl}</span>
-        </div>
+        <span className="text-emerald-400 font-semibold font-mono text-[10px] break-all">
+          {displayVal}
+        </span>
       );
     } else {
-      const prev = log.previousValue && log.previousValue !== "No Photo" && log.previousValue !== "Existing Photo" ? log.previousValue : "N/A";
-      const cleanedPrev = prev.replace(/^(Old Value|New Value):\s*/i, '').replace(/\*\*|"/g, '').trim();
       return (
-        <span className="text-neutral-500 font-mono text-[10px]">
-          {cleanedPrev}
+        <span className="text-neutral-500 font-mono text-[10px] break-all">
+          {displayVal}
         </span>
       );
     }

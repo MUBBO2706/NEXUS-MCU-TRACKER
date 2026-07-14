@@ -998,10 +998,13 @@ Last Updated: ${lastUpdatedIst}
         avatarFileId = uploaded.fileId;
       }
 
+      const oldAvatarUrl = userFile.avatarFileId ? `/api/user/avatar?userId=${decoded.userId}` : "No Avatar";
+      const newAvatarUrl = `/api/user/avatar?userId=${decoded.userId}`;
+
       addUpdateLog(userFile, {
         action: "Profile Photo Updated",
-        previousValue: userFile.avatarFileId ? "Existing Photo" : "No Photo",
-        newValue: "New Custom Photo",
+        previousValue: oldAvatarUrl,
+        newValue: newAvatarUrl,
         source: "Profile",
         userPerformed: userFile.username,
         metadata: { filename: name }
