@@ -1,4 +1,4 @@
-import { getTelegramConfig, uploadTelegramFile, getTelegramFilePath, downloadTelegramFile, updateTelegramFile, getMasterIndexMetadata, updateMasterIndexMetadata } from './telegramDb';
+import { getTelegramConfig, uploadTelegramFile, getTelegramFilePath, downloadTelegramFile, updateTelegramFile, getMasterIndexMetadata, updateMasterIndexMetadata } from './telegramDb.js';
 
 const DEVICE_MAPPINGS_FILENAME = 'device_mappings.json';
 const GITHUB_DEVICES_URL = 'https://raw.githubusercontent.com/androidtrackers/certified-android-devices/master/by_model.json';
