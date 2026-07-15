@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import * as telegramDb from "./backend/telegramDb.js";
 import * as telegramCharacterImages from "./backend/telegramCharacterImages.js";
+import { resolveDeviceName } from "./backend/deviceResolver.js";
 import crypto from "crypto";
 import { MCU_TITLES } from "./src/data/mcuData.js";
 import dotenv from "dotenv";
@@ -146,6 +147,7 @@ app.get("/api/auth/status", (req, res) => {
         durationSeconds: null,
         browser: uaInfo.browser,
         os: uaInfo.os,
+        device: uaInfo.device,
         status: "Active",
       };
 
@@ -329,16 +331,23 @@ app.get("/api/auth/status", (req, res) => {
       // Create new session
       const sessionId = crypto.randomUUID();
       const uaInfo = telegramDb.parseUserAgent(req.headers["user-agent"]);
+      
+      const resolvedDeviceName = await resolveDeviceName(uaInfo.device);
 
-      const newSession: telegramDb.UserSession = {
+      const newSession: telegramDb.UserSession & { resolvedDeviceName?: string } = {
         sessionId,
         startedAt: Date.now(),
         endedAt: null,
         durationSeconds: null,
         browser: uaInfo.browser,
         os: uaInfo.os,
+        device: uaInfo.device,
         status: "Active",
       };
+      
+      if (resolvedDeviceName) {
+        newSession.resolvedDeviceName = resolvedDeviceName;
+      }
 
       // Ensure sessions array exists
       if (!userJson.sessions) {
@@ -611,6 +620,149 @@ app.get("/api/auth/status", (req, res) => {
         return res.status(401).json({ error: "Unauthorized: Session has been terminated or expired" });
       }
       res.status(500).json({ error: `Failed to terminate other sessions: ${err.message}` });
+    }
+  });
+
+  // Delete a specific inactive session (Delete)
+  app.post("/api/auth/delete-session", async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Unauthorized: Missing token" });
+    }
+
+    const sessionToken = authHeader.split(" ")[1];
+
+    try {
+      const { token, chatId, secret } = telegramDb.getTelegramConfig();
+
+      const decoded = telegramDb.verifyToken(sessionToken, secret);
+      if (!decoded || !decoded.userId || !decoded.sessionId) {
+        return res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
+      }
+
+      const { sessionIdToDelete } = req.body;
+      if (!sessionIdToDelete) {
+        return res.status(400).json({ error: "Session ID to delete is required" });
+      }
+
+      if (sessionIdToDelete === decoded.sessionId) {
+        return res.status(400).json({ error: "Cannot delete the current active session" });
+      }
+
+      const result = await telegramDb.lockDatabase(async () => {
+        // Fetch user's individual JSON file
+        const userFile = await telegramDb.fetchUserFile(token, chatId, decoded.userId, true);
+
+        // Check if current session is active
+        const currentSession = userFile.sessions?.find(s => s.sessionId === decoded.sessionId);
+        if (!currentSession || currentSession.status !== "Active") {
+          throw new Error("UNAUTHORIZED_SESSION_INACTIVE");
+        }
+
+        if (userFile.sessions) {
+          const sessionIndex = userFile.sessions.findIndex(s => s.sessionId === sessionIdToDelete);
+          if (sessionIndex !== -1) {
+            const s = userFile.sessions[sessionIndex];
+            
+            // Check delete rules: A session must always be terminated first, then it becomes eligible for deletion.
+            if (s.status === "Active") {
+              throw new Error("CANNOT_DELETE_ACTIVE_SESSION");
+            }
+
+            // Remove session from array
+            userFile.sessions.splice(sessionIndex, 1);
+            userFile.lastUpdated = Date.now();
+
+            // Add a security audit log
+            addUpdateLog(userFile, {
+              action: "Session Deleted",
+              previousValue: `${s.status} (OS: ${s.os}, Browser: ${s.browser})`,
+              newValue: "Session Record Deleted",
+              source: "Settings",
+              userPerformed: userFile.username,
+              metadata: { deletedSessionId: sessionIdToDelete }
+            });
+
+            // Upload updated JSON file to Telegram
+            await telegramDb.updateUserFileAndIndex(token, chatId, decoded.userId, userFile);
+          }
+        }
+        return userFile.sessions || [];
+      });
+
+      res.json({ success: true, sessions: result });
+    } catch (err: any) {
+      console.error("Delete session error:", err);
+      if (err.message === "UNAUTHORIZED_SESSION_INACTIVE") {
+        return res.status(401).json({ error: "Unauthorized: Session has been terminated or expired" });
+      }
+      if (err.message === "CANNOT_DELETE_ACTIVE_SESSION") {
+        return res.status(400).json({ error: "Cannot delete an active session. It must be terminated first." });
+      }
+      res.status(500).json({ error: `Failed to delete session: ${err.message}` });
+    }
+  });
+
+  // Delete all terminated/expired/logged out sessions
+  app.post("/api/auth/delete-inactive-sessions", async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Unauthorized: Missing token" });
+    }
+
+    const sessionToken = authHeader.split(" ")[1];
+
+    try {
+      const { token, chatId, secret } = telegramDb.getTelegramConfig();
+
+      const decoded = telegramDb.verifyToken(sessionToken, secret);
+      if (!decoded || !decoded.userId || !decoded.sessionId) {
+        return res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
+      }
+
+      const result = await telegramDb.lockDatabase(async () => {
+        // Fetch user's individual JSON file
+        const userFile = await telegramDb.fetchUserFile(token, chatId, decoded.userId, true);
+
+        // Check if current session is active
+        const currentSession = userFile.sessions?.find(s => s.sessionId === decoded.sessionId);
+        if (!currentSession || currentSession.status !== "Active") {
+          throw new Error("UNAUTHORIZED_SESSION_INACTIVE");
+        }
+
+        if (userFile.sessions) {
+          const originalCount = userFile.sessions.length;
+          // Deletes all terminated/expired/logged out sessions except the current and active sessions.
+          // Active sessions should never be deleted directly.
+          userFile.sessions = userFile.sessions.filter(s => s.status === "Active" || s.sessionId === decoded.sessionId);
+          const deletedCount = originalCount - userFile.sessions.length;
+
+          if (deletedCount > 0) {
+            userFile.lastUpdated = Date.now();
+
+            // Add security audit log
+            addUpdateLog(userFile, {
+              action: "Inactive Sessions Deleted",
+              previousValue: `Total: ${originalCount}`,
+              newValue: `DELETED ${deletedCount} INACTIVE SESSIONS (Remaining Active: ${userFile.sessions.length})`,
+              source: "Settings",
+              userPerformed: userFile.username,
+            });
+
+            // Upload updated JSON file to Telegram
+            await telegramDb.updateUserFileAndIndex(token, chatId, decoded.userId, userFile);
+          }
+        }
+        return userFile.sessions || [];
+      });
+
+      res.json({ success: true, sessions: result });
+    } catch (err: any) {
+      console.error("Delete inactive sessions error:", err);
+      if (err.message === "UNAUTHORIZED_SESSION_INACTIVE") {
+        return res.status(401).json({ error: "Unauthorized: Session has been terminated or expired" });
+      }
+      res.status(500).json({ error: `Failed to delete inactive sessions: ${err.message}` });
     }
   });
 

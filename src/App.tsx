@@ -318,6 +318,60 @@ export default function App() {
     }
   };
 
+  const handleDeleteSession = async (sessionId: string) => {
+    if (!authToken) return;
+    try {
+      const res = await fetch('/api/auth/delete-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ sessionIdToDelete: sessionId })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setUser((prev: any) => ({ ...prev, sessions: data.sessions }));
+          showFeedback('Session deleted successfully.', 'success');
+        } else {
+          showFeedback(data.error || 'Failed to delete session.', 'error');
+        }
+      } else {
+        showFeedback('Failed to delete session.', 'error');
+      }
+    } catch (err: any) {
+      console.error("Failed to delete session:", err);
+      showFeedback('Connection error.', 'error');
+    }
+  };
+
+  const handleDeleteInactiveSessions = async () => {
+    if (!authToken) return;
+    try {
+      const res = await fetch('/api/auth/delete-inactive-sessions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setUser((prev: any) => ({ ...prev, sessions: data.sessions }));
+          showFeedback('All inactive sessions deleted.', 'success');
+        } else {
+          showFeedback(data.error || 'Failed to delete sessions.', 'error');
+        }
+      } else {
+        showFeedback('Failed to delete sessions.', 'error');
+      }
+    } catch (err: any) {
+      console.error("Failed to delete sessions:", err);
+      showFeedback('Connection error.', 'error');
+    }
+  };
+
   const handleLogin = async (usernameInput: string, passwordInput: string) => {
     if (!usernameInput || !passwordInput) {
       setAuthError('Username and password are required.');
@@ -1771,6 +1825,8 @@ export default function App() {
                   currentSessionId={currentSessionId}
                   onTerminateSession={handleTerminateSession}
                   onTerminateOtherSessions={handleTerminateOtherSessions}
+                  onDeleteSession={handleDeleteSession}
+                  onDeleteInactiveSessions={handleDeleteInactiveSessions}
                 />
               )}
 

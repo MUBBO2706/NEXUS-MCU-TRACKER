@@ -11,6 +11,8 @@ interface SessionRegistryCodexProps {
   currentSessionId?: string | null;
   onTerminateSession?: (sessionId: string) => Promise<void>;
   onTerminateOtherSessions?: () => Promise<void>;
+  onDeleteSession?: (sessionId: string) => Promise<void>;
+  onDeleteInactiveSessions?: () => Promise<void>;
 }
 
 export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
@@ -21,6 +23,8 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
   currentSessionId,
   onTerminateSession,
   onTerminateOtherSessions,
+  onDeleteSession,
+  onDeleteInactiveSessions,
 }) => {
   // Local States
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,6 +34,36 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
+  const [isDurationHHMMSS, setIsDurationHHMMSS] = useState(false);
+
+  // Row-level action states
+  const [confirmingTerminateId, setConfirmingTerminateId] = useState<string | null>(null);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+  const [isRowActionRunning, setIsRowActionRunning] = useState<string | null>(null);
+
+  // Bulk action custom confirmation modal states
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<'terminate_others' | 'delete_all_inactive' | null>(null);
+  const [isBulkRunning, setIsBulkRunning] = useState(false);
+
+  const formatDuration = (seconds: number | null | undefined) => {
+    if (seconds == null) return 'Ongoing';
+    if (isDurationHHMMSS) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m}m ${s}s`;
+    }
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    return `${h}h ${m}m`;
+  };
 
   // Theme helper for consistency
   const getThemeStyles = () => {
@@ -68,6 +102,23 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
   };
 
   const themeStyles = getThemeStyles();
+
+  const getModalConfirmBtnStyle = () => {
+    switch (activeTheme) {
+      case 'cosmic':
+        return 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-950/20';
+      case 'asgardian':
+        return 'bg-amber-600 hover:bg-amber-500 shadow-amber-950/20';
+      case 'wakanda':
+        return 'bg-purple-600 hover:bg-purple-500 shadow-purple-950/20';
+      case 'stark':
+        return 'bg-sky-600 hover:bg-sky-500 shadow-sky-950/20';
+      case 'hydra':
+        return 'bg-red-600 hover:bg-red-500 shadow-red-950/20';
+      default: // oled
+        return 'bg-red-600 hover:bg-red-500 shadow-red-950/20';
+    }
+  };
 
   // Status options
   const statusOptions = [
@@ -164,19 +215,6 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
             Audit all security sessions, client devices, and authentication states for Agent @{user?.username || 'sandbox_mode'}.
           </p>
         </div>
-        {onTerminateOtherSessions && sessions.filter((s: any) => s.status === 'Active' && s.sessionId !== currentSessionId).length > 0 && (
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm('Are you sure you want to terminate all other active sessions? This will force-logout other connected devices.')) {
-                onTerminateOtherSessions();
-              }
-            }}
-            className="bg-red-950/40 hover:bg-red-900/60 border border-red-900/60 hover:border-red-500 text-red-200 text-[10px] font-bold uppercase tracking-wider px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-md shrink-0 font-mono"
-          >
-            Terminate Other Sessions
-          </button>
-        )}
       </div>
 
       {/* Search and Filters Group */}
@@ -196,8 +234,8 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
           />
         </div>
 
-        {/* Row 2 / Right on desktop: Three Custom Selectors */}
-        <div className="grid grid-cols-3 gap-2.5 w-full md:w-auto md:flex md:items-center flex-shrink-0">
+        {/* Row 2 / Right on desktop: Custom Selectors & Actions */}
+        <div className="grid grid-cols-3 md:flex gap-2.5 w-full md:w-auto items-center flex-shrink-0">
           <div className="md:w-44">
             <CustomDropdown
               value={filterStatus}
@@ -239,6 +277,38 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
               align="right"
             />
           </div>
+
+          <div className="col-span-3 md:col-span-1 md:ml-1 mt-2 md:mt-0 flex flex-row items-center justify-between md:justify-end gap-2 w-full md:w-auto">
+            {onTerminateOtherSessions && (
+              <button
+                type="button"
+                disabled={isRowActionRunning !== null || isBulkRunning || sessions.filter((s: any) => s.status === 'Active' && s.sessionId !== currentSessionId).length === 0}
+                onClick={() => {
+                  setModalType('terminate_others');
+                  setModalOpen(true);
+                }}
+                className="bg-red-950/40 hover:bg-red-900/60 border border-red-900/60 hover:border-red-500 text-red-200 text-[9px] font-bold uppercase tracking-wider px-2.5 py-1.5 h-9 rounded-xl transition-all cursor-pointer shadow-md shrink-0 font-mono flex items-center justify-center w-1/2 md:w-auto disabled:opacity-40 disabled:hover:bg-red-950/40 disabled:hover:border-red-900/60 disabled:cursor-not-allowed whitespace-nowrap"
+                title="Terminate all other active sessions except the current one"
+              >
+                Terminate Others
+              </button>
+            )}
+
+            {onDeleteInactiveSessions && (
+              <button
+                type="button"
+                disabled={isRowActionRunning !== null || isBulkRunning || sessions.filter((s: any) => s.status !== 'Active' && s.sessionId !== currentSessionId).length === 0}
+                onClick={() => {
+                  setModalType('delete_all_inactive');
+                  setModalOpen(true);
+                }}
+                className="bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 hover:border-neutral-700 text-neutral-200 text-[9px] font-bold uppercase tracking-wider px-2.5 py-1.5 h-9 rounded-xl transition-all cursor-pointer shadow-md shrink-0 font-mono flex items-center justify-center w-1/2 md:w-auto disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                title="Permanently delete all terminated/expired/logged-out sessions"
+              >
+                Delete All Sessions
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -279,23 +349,30 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
 
         {pageSessions.length > 0 ? (
           <div className="flex flex-col gap-4 text-left">
-            <div className="overflow-x-auto no-scrollbar -mx-4 sm:-mx-6 w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] border-t border-b border-neutral-900/40 text-left">
+            <div className="overflow-x-auto no-scrollbar -mx-5 w-[calc(100%+2.5rem)] border-t border-b border-neutral-900/40 text-left">
               <table className="w-full text-left font-mono text-[10px] leading-normal border-collapse min-w-[650px]">
                 <thead>
                   <tr className="bg-neutral-950/20 text-neutral-400 uppercase tracking-wider border-b border-neutral-900 text-[8px]">
-                    <th className="py-2.5 pl-4 sm:pl-6 pr-3 font-semibold text-left whitespace-nowrap">Session Start</th>
+                    <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Session Start</th>
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Session End</th>
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Browser</th>
+                    <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Device</th>
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Operating System</th>
-                    <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Duration</th>
+                    <th 
+                      className="py-2.5 px-3 font-bold text-left whitespace-nowrap cursor-pointer text-neutral-300 hover:text-white transition-colors select-none"
+                      onClick={() => setIsDurationHHMMSS(!isDurationHHMMSS)}
+                      title="Click to toggle duration format"
+                    >
+                      Duration
+                    </th>
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Status</th>
-                    {onTerminateSession && <th className="py-2.5 pl-3 pr-4 sm:pr-6 font-semibold text-left whitespace-nowrap">Actions</th>}
+                    {onTerminateSession && <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Actions</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-900/40 text-neutral-300">
                   {pageSessions.map((session: any) => (
                     <tr key={session.sessionId} className="hover:bg-neutral-900/10 transition-colors">
-                      <td className="py-2.5 pl-4 sm:pl-6 pr-3 text-left whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-left whitespace-nowrap">
                         {formatToIndianDateTime(session.startedAt)}
                       </td>
                       <td className="py-2.5 px-3 text-left whitespace-nowrap text-neutral-500">
@@ -305,11 +382,14 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
                         {session.browser}
                       </td>
                       <td className="py-2.5 px-3 text-left whitespace-nowrap">
+                        <span className="font-semibold">{session.resolvedDeviceName || session.device || 'Unknown Device'}</span>
+                      </td>
+                      <td className="py-2.5 px-3 text-left whitespace-nowrap">
                         {session.os}
                       </td>
                       <td className="py-2.5 px-3 text-left whitespace-nowrap font-semibold">
                         {session.endedAt 
-                          ? `${session.durationSeconds ?? 0}s`
+                          ? formatDuration(session.durationSeconds)
                           : 'Active now'
                         }
                       </td>
@@ -325,25 +405,100 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
                         </span>
                       </td>
                       {onTerminateSession && (
-                        <td className="py-2.5 pl-3 pr-4 sm:pr-6 text-left whitespace-nowrap">
-                          {session.status === 'Active' ? (
-                            session.sessionId === currentSessionId ? (
-                              <span className="text-emerald-400 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border border-emerald-500/20 bg-emerald-500/5">Current Session</span>
-                            ) : (
+                        <td className="py-2.5 px-3 text-left whitespace-nowrap">
+                          {session.sessionId === currentSessionId ? (
+                            <span className="text-emerald-400 text-[8px] font-bold uppercase tracking-wider bg-emerald-950/20 border border-emerald-900/40 px-1.5 py-0.5 rounded">
+                              Current
+                            </span>
+                          ) : isRowActionRunning === session.sessionId ? (
+                            <div className="flex items-center gap-1 text-[8px] font-mono text-neutral-400">
+                              <span className="w-2.5 h-2.5 border border-neutral-400/30 border-t-neutral-400 rounded-full animate-spin"></span>
+                              <span>{confirmingDeleteId === session.sessionId ? 'Deleting...' : 'Terminating...'}</span>
+                            </div>
+                          ) : confirmingTerminateId === session.sessionId ? (
+                            <div className="flex items-center gap-2">
                               <button
                                 type="button"
-                                onClick={() => {
-                                  if (window.confirm(`Are you sure you want to terminate this active session (OS: ${session.os}, Browser: ${session.browser})?`)) {
-                                    onTerminateSession(session.sessionId);
+                                onClick={() => setConfirmingTerminateId(null)}
+                                className="text-neutral-400 hover:text-white cursor-pointer text-[8px] uppercase tracking-wider"
+                              >
+                                Cancel
+                              </button>
+                              <span className="text-neutral-600">|</span>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  setIsRowActionRunning(session.sessionId);
+                                  try {
+                                    if (onTerminateSession) {
+                                      await onTerminateSession(session.sessionId);
+                                    }
+                                  } catch (e) {
+                                    console.error(e);
+                                  } finally {
+                                    setIsRowActionRunning(null);
+                                    setConfirmingTerminateId(null);
                                   }
                                 }}
                                 className="text-red-500 hover:text-red-400 font-bold hover:underline cursor-pointer text-[8px] uppercase tracking-wider"
                               >
                                 Terminate
                               </button>
-                            )
+                            </div>
+                          ) : confirmingDeleteId === session.sessionId ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setConfirmingDeleteId(null)}
+                                className="text-neutral-400 hover:text-white cursor-pointer text-[8px] uppercase tracking-wider"
+                              >
+                                Cancel
+                              </button>
+                              <span className="text-neutral-600">|</span>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  setIsRowActionRunning(session.sessionId);
+                                  try {
+                                    if (onDeleteSession) {
+                                      await onDeleteSession(session.sessionId);
+                                    }
+                                  } catch (e) {
+                                    console.error(e);
+                                  } finally {
+                                    setIsRowActionRunning(null);
+                                    setConfirmingDeleteId(null);
+                                  }
+                                }}
+                                className="text-orange-500 hover:text-orange-400 font-bold hover:underline cursor-pointer text-[8px] uppercase tracking-wider"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          ) : session.status === 'Active' ? (
+                            <button
+                              type="button"
+                              disabled={isRowActionRunning !== null || isBulkRunning}
+                              onClick={() => {
+                                  setConfirmingTerminateId(session.sessionId);
+                                  setConfirmingDeleteId(null);
+                              }}
+                              className="text-red-500 hover:text-red-400 font-bold hover:underline cursor-pointer text-[8px] uppercase tracking-wider disabled:opacity-40 disabled:hover:no-underline"
+                            >
+                              Terminate
+                            </button>
                           ) : (
-                            <span className="text-neutral-500 text-[10px]">—</span>
+                            <button
+                              type="button"
+                              disabled={isRowActionRunning !== null || isBulkRunning}
+                              onClick={() => {
+                                  setConfirmingDeleteId(session.sessionId);
+                                  setConfirmingTerminateId(null);
+                              }}
+                              className="text-orange-500 hover:text-orange-400 font-bold hover:underline cursor-pointer text-[8px] uppercase tracking-wider disabled:opacity-40 disabled:hover:no-underline"
+                            >
+                              Delete
+                            </button>
                           )}
                         </td>
                       )}
@@ -381,6 +536,68 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
           <p className="text-[10px] text-neutral-500 italic text-center py-8">No sessions found matching filters.</p>
         )}
       </div>
+
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-neutral-950 border border-neutral-850 max-w-md w-full rounded-2xl p-6 shadow-2xl animate-scaleUp text-left">
+            <h3 className="font-display font-bold text-lg text-white mb-2">
+              {modalType === 'terminate_others' ? 'Terminate Other Active Sessions' : 'Delete All Inactive Sessions'}
+            </h3>
+            <p className="text-xs text-neutral-400 mb-6 font-sans">
+              {modalType === 'terminate_others' 
+                ? 'Are you sure you want to terminate all other active sessions? This will force-logout all other devices currently connected to your account.'
+                : 'Are you sure you want to delete all terminated, expired, or logged-out session records? This action cannot be undone and will permanently purge inactive logs.'}
+            </p>
+            <div className="flex items-center justify-end gap-3 font-sans text-xs">
+              <button
+                type="button"
+                disabled={isBulkRunning}
+                onClick={() => {
+                  setModalOpen(false);
+                  setModalType(null);
+                }}
+                className="px-4 py-2.5 rounded-xl border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700 transition-colors cursor-pointer disabled:opacity-40"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isBulkRunning}
+                onClick={async () => {
+                  setIsBulkRunning(true);
+                  try {
+                    if (modalType === 'terminate_others') {
+                      if (onTerminateOtherSessions) {
+                        await onTerminateOtherSessions();
+                      }
+                    } else {
+                      if (onDeleteInactiveSessions) {
+                        await onDeleteInactiveSessions();
+                      }
+                    }
+                  } catch (e) {
+                    console.error(e);
+                  } finally {
+                    setIsBulkRunning(false);
+                    setModalOpen(false);
+                    setModalType(null);
+                  }
+                }}
+                className={`${getModalConfirmBtnStyle()} text-white font-semibold px-4 py-2.5 rounded-xl transition-all cursor-pointer shadow-lg flex items-center gap-2 disabled:opacity-40`}
+              >
+                {isBulkRunning ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <span>{modalType === 'terminate_others' ? 'Confirm Termination' : 'Confirm Deletion'}</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

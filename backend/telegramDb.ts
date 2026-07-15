@@ -37,6 +37,8 @@ export interface UserSession {
   durationSeconds: number | null;
   browser: string;
   os: string;
+  device?: string;
+  resolvedDeviceName?: string;
   status: "Active" | "Terminated" | "Logged Out";
 }
 
@@ -110,6 +112,7 @@ export interface MasterIndex {
   shards: Record<string, ShardInfo>;
   userIdMap: Record<string, string>; // maps userId -> shardKey
   lastUpdated: number;
+  metadata?: any;
 }
 
 // In-Memory Database Caches for Ultra-Low Latency Roundtrips
@@ -146,21 +149,42 @@ const USER_CACHE_TTL = 8000;   // 8 seconds TTL for individual user files during
 
 
 // Extract Browser and OS from user-agent string
-export function parseUserAgent(userAgentString: string | undefined): { browser: string; os: string } {
+export function parseUserAgent(userAgentString: string | undefined): { browser: string; os: string; device: string } {
   if (!userAgentString) {
-    return { browser: "Unknown", os: "Unknown" };
+    return { browser: "Unknown", os: "Unknown", device: "Unknown Device" };
   }
   let os = "Unknown OS";
   let browser = "Unknown Browser";
+  let device = "Unknown Device";
 
   const ua = userAgentString.toLowerCase();
 
   // OS Detection
   if (ua.includes("windows")) os = "Windows";
   else if (ua.includes("macintosh") || ua.includes("mac os")) os = "macOS";
-  else if (ua.includes("linux")) os = "Linux";
   else if (ua.includes("android")) os = "Android";
+  else if (ua.includes("linux")) os = "Linux";
   else if (ua.includes("iphone") || ua.includes("ipad")) os = "iOS";
+
+  // Device Detection (Basic fallback)
+  if (os === "Android") {
+    // Try to extract Android device model (e.g., "Linux; Android 10; SM-A205U" -> "SM-A205U")
+    const match = userAgentString.match(/Android\s+[0-9\.]+\s*;?\s*([^;]+)(?:;|\))/);
+    if (match && match[1]) {
+      device = match[1].replace(/Build.*/, '').trim();
+    } else {
+      device = "Android Device";
+    }
+  } else if (os === "iOS") {
+    if (ua.includes("iphone")) device = "iPhone";
+    else if (ua.includes("ipad")) device = "iPad";
+  } else if (os === "macOS") {
+    device = "Mac";
+  } else if (os === "Windows") {
+    device = "PC";
+  } else if (os === "Linux") {
+    device = "Linux PC";
+  }
 
   // Browser Detection
   if (ua.includes("firefox")) browser = "Firefox";
@@ -170,7 +194,7 @@ export function parseUserAgent(userAgentString: string | undefined): { browser: 
   else if (ua.includes("opera") || ua.includes("opr/")) browser = "Opera";
   else if (ua.includes("chromium")) browser = "Chromium";
 
-  return { browser, os };
+  return { browser, os, device };
 }
 
 // Lazy configurations and validation
@@ -949,6 +973,85 @@ export async function saveUserIndex(
   };
 
   return finalMasterMessageId!;
+}
+
+// Fetch master index metadata (utilizes caching for high performance)
+export async function getMasterIndexMetadata(token: string, chatId: string): Promise<any> {
+  if (cachedMaster) {
+    return cachedMaster.master.metadata;
+  }
+  await fetchUserIndex(token, chatId);
+  if (cachedMaster) {
+    return cachedMaster.master.metadata;
+  }
+  return undefined;
+}
+
+// Update master index metadata and persist to Telegram
+export async function updateMasterIndexMetadata(token: string, chatId: string, metadata: any): Promise<void> {
+  const config = getTelegramConfig();
+  const targetAuthChatId = config.authChannelId;
+
+  let master: MasterIndex;
+  let pinnedMessageId: number | null = null;
+
+  if (cachedMaster) {
+    master = cachedMaster.master;
+    pinnedMessageId = cachedMaster.pinnedMessageId;
+  } else {
+    await fetchUserIndex(token, chatId);
+    if (cachedMaster) {
+      master = cachedMaster.master;
+      pinnedMessageId = cachedMaster.pinnedMessageId;
+    } else {
+      master = {
+        isMaster: true,
+        shards: {},
+        userIdMap: {},
+        lastUpdated: Date.now()
+      };
+    }
+  }
+
+  master.metadata = {
+    ...(master.metadata || {}),
+    ...metadata
+  };
+  master.lastUpdated = Date.now();
+
+  const filename = "user_index.json";
+  const content = JSON.stringify(master, null, 2);
+
+  let finalMasterMessageId = pinnedMessageId;
+  if (pinnedMessageId) {
+    try {
+      const updated = await updateTelegramFile(token, targetAuthChatId, pinnedMessageId, filename, content);
+      finalMasterMessageId = updated.messageId;
+    } catch (err) {
+      finalMasterMessageId = null;
+    }
+  }
+
+  if (!finalMasterMessageId) {
+    const uploaded = await uploadTelegramFile(token, targetAuthChatId, filename, content);
+    finalMasterMessageId = uploaded.messageId;
+
+    await telegramRequest(token, `pinChatMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: targetAuthChatId,
+        message_id: finalMasterMessageId,
+        disable_notification: true
+      })
+    });
+  }
+
+  cachedMaster = {
+    master,
+    pinnedMessageId: finalMasterMessageId,
+    timestamp: Date.now()
+  };
 }
 
 // Helper to sanitize filenames to only keep alphanumeric and underscores

@@ -68,6 +68,8 @@ interface ProfileTabProps {
   currentSessionId?: string | null;
   onTerminateSession?: (sessionId: string) => Promise<void>;
   onTerminateOtherSessions?: () => Promise<void>;
+  onDeleteSession?: (sessionId: string) => Promise<void>;
+  onDeleteInactiveSessions?: () => Promise<void>;
 }
 
 export function ProfileTab({
@@ -125,7 +127,30 @@ export function ProfileTab({
   currentSessionId,
   onTerminateSession,
   onTerminateOtherSessions,
+  onDeleteSession,
+  onDeleteInactiveSessions,
 }: ProfileTabProps) {
+  const [isDurationHHMMSS, setIsDurationHHMMSS] = React.useState(false);
+
+  const formatDuration = (seconds: number | null | undefined) => {
+    if (seconds == null) return 'Ongoing';
+    if (isDurationHHMMSS) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m}m ${s}s`;
+    }
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    return `${h}h ${m}m`;
+  };
+
   return (
     <>
       {showAllUpdates ? (
@@ -146,6 +171,8 @@ export function ProfileTab({
           currentSessionId={currentSessionId}
           onTerminateSession={onTerminateSession}
           onTerminateOtherSessions={onTerminateOtherSessions}
+          onDeleteSession={onDeleteSession}
+          onDeleteInactiveSessions={onDeleteInactiveSessions}
         />
       ) : (
         <div className="flex flex-col gap-4 font-sans w-full py-1 px-1 text-left animate-fadeIn" id="profile-main-container">
@@ -347,8 +374,15 @@ export function ProfileTab({
                           <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Session Start</th>
                           <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Session End</th>
                           <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Browser</th>
+                          <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Device</th>
                           <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Operating System</th>
-                          <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Duration</th>
+                          <th 
+                            className="py-2.5 px-3 font-bold text-left whitespace-nowrap cursor-pointer text-neutral-300 hover:text-white transition-colors select-none"
+                            onClick={() => setIsDurationHHMMSS(!isDurationHHMMSS)}
+                            title="Click to toggle duration format"
+                          >
+                            Duration
+                          </th>
                           <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Status</th>
                         </tr>
                       </thead>
@@ -365,11 +399,14 @@ export function ProfileTab({
                               {session.browser}
                             </td>
                             <td className="py-2.5 px-3 text-left whitespace-nowrap">
+                              <span className="font-semibold">{session.resolvedDeviceName || session.device || 'Unknown Device'}</span>
+                            </td>
+                            <td className="py-2.5 px-3 text-left whitespace-nowrap">
                               {session.os}
                             </td>
                             <td className="py-2.5 px-3 text-left whitespace-nowrap font-semibold">
                               {session.endedAt 
-                                ? `${session.durationSeconds ?? 0}s`
+                                ? formatDuration(session.durationSeconds)
                                 : 'Active now'
                               }
                             </td>
