@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Eye, Search, ArrowLeft } from 'lucide-react';
 import { CustomDropdown } from '../CustomDropdown';
-import { CustomDatePicker } from './ShieldUpdatesLedger';
+import { CustomDatePicker } from '../Common/CustomDatePicker';
+import { ConfirmationModal } from '../Common/ConfirmationModal';
 
 interface SessionRegistryCodexProps {
   onBack: () => void;
@@ -234,7 +235,7 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
           />
         </div>
 
-        {/* Row 2 / Right on desktop: Custom Selectors & Actions */}
+        {/* Row 2 / Right on desktop: Custom Selectors */}
         <div className="grid grid-cols-3 md:flex gap-2.5 w-full md:w-auto items-center flex-shrink-0">
           <div className="md:w-44">
             <CustomDropdown
@@ -247,6 +248,7 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
               activeTheme={activeTheme}
               placeholder="All Statuses"
               align="left"
+              compact={true}
             />
           </div>
 
@@ -261,6 +263,7 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
               activeTheme={activeTheme}
               placeholder="Sort By"
               align="center"
+              compact={true}
             />
           </div>
 
@@ -275,44 +278,13 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
               activeTheme={activeTheme}
               placeholder="Time Range"
               align="right"
+              compact={true}
             />
-          </div>
-
-          <div className="col-span-3 md:col-span-1 md:ml-1 mt-2 md:mt-0 flex flex-row items-center justify-between md:justify-end gap-2 w-full md:w-auto">
-            {onTerminateOtherSessions && (
-              <button
-                type="button"
-                disabled={isRowActionRunning !== null || isBulkRunning || sessions.filter((s: any) => s.status === 'Active' && s.sessionId !== currentSessionId).length === 0}
-                onClick={() => {
-                  setModalType('terminate_others');
-                  setModalOpen(true);
-                }}
-                className="bg-red-950/40 hover:bg-red-900/60 border border-red-900/60 hover:border-red-500 text-red-200 text-[9px] font-bold uppercase tracking-wider px-2.5 py-1.5 h-9 rounded-xl transition-all cursor-pointer shadow-md shrink-0 font-mono flex items-center justify-center w-1/2 md:w-auto disabled:opacity-40 disabled:hover:bg-red-950/40 disabled:hover:border-red-900/60 disabled:cursor-not-allowed whitespace-nowrap"
-                title="Terminate all other active sessions except the current one"
-              >
-                Terminate Others
-              </button>
-            )}
-
-            {onDeleteInactiveSessions && (
-              <button
-                type="button"
-                disabled={isRowActionRunning !== null || isBulkRunning || sessions.filter((s: any) => s.status !== 'Active' && s.sessionId !== currentSessionId).length === 0}
-                onClick={() => {
-                  setModalType('delete_all_inactive');
-                  setModalOpen(true);
-                }}
-                className="bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 hover:border-neutral-700 text-neutral-200 text-[9px] font-bold uppercase tracking-wider px-2.5 py-1.5 h-9 rounded-xl transition-all cursor-pointer shadow-md shrink-0 font-mono flex items-center justify-center w-1/2 md:w-auto disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
-                title="Permanently delete all terminated/expired/logged-out sessions"
-              >
-                Delete All Sessions
-              </button>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Custom Range: Additional Custom Selectors */}
+      {/* Custom Range: Additional Custom Selectors (rendered ABOVE bulk actions as requested) */}
       {timeRange === 'custom' && (
         <div className="grid grid-cols-2 gap-3 mt-1.5 animate-fadeIn z-10">
           <CustomDatePicker
@@ -322,6 +294,7 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
               setPage(1);
             }}
             label="From"
+            activeTheme={activeTheme}
           />
 
           <CustomDatePicker
@@ -331,7 +304,43 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
               setPage(1);
             }}
             label="To"
+            activeTheme={activeTheme}
           />
+        </div>
+      )}
+
+      {/* Bulk Actions Row - below both Filters and Custom Range picker */}
+      {(onTerminateOtherSessions || onDeleteInactiveSessions) && (
+        <div className="flex flex-row items-center justify-start gap-2.5 mt-2.5 w-full border-t border-neutral-900/40 pt-2.5">
+          {onTerminateOtherSessions && (
+            <button
+              type="button"
+              disabled={isRowActionRunning !== null || isBulkRunning || sessions.filter((s: any) => s.status === 'Active' && s.sessionId !== currentSessionId).length === 0}
+              onClick={() => {
+                setModalType('terminate_others');
+                setModalOpen(true);
+              }}
+              className="bg-red-950/40 hover:bg-red-900/60 border border-red-900/60 hover:border-red-500 text-red-200 text-[10px] font-bold uppercase tracking-wider px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-md shrink-0 font-mono flex items-center justify-center disabled:opacity-40 disabled:hover:bg-red-950/40 disabled:hover:border-red-900/60 disabled:cursor-not-allowed whitespace-nowrap"
+              title="Terminate all other active sessions except the current one"
+            >
+              Terminate All Inactive
+            </button>
+          )}
+
+          {onDeleteInactiveSessions && (
+            <button
+              type="button"
+              disabled={isRowActionRunning !== null || isBulkRunning || sessions.filter((s: any) => s.status !== 'Active' && s.sessionId !== currentSessionId).length === 0}
+              onClick={() => {
+                setModalType('delete_all_inactive');
+                setModalOpen(true);
+              }}
+              className="bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 hover:border-neutral-700 text-neutral-200 text-[10px] font-bold uppercase tracking-wider px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-md shrink-0 font-mono flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+              title="Permanently delete all terminated/expired/logged-out sessions"
+            >
+              Delete All Sessions
+            </button>
+          )}
         </div>
       )}
 
@@ -537,67 +546,42 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
         )}
       </div>
 
-      {modalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-neutral-950 border border-neutral-850 max-w-md w-full rounded-2xl p-6 shadow-2xl animate-scaleUp text-left">
-            <h3 className="font-display font-bold text-lg text-white mb-2">
-              {modalType === 'terminate_others' ? 'Terminate Other Active Sessions' : 'Delete All Inactive Sessions'}
-            </h3>
-            <p className="text-xs text-neutral-400 mb-6 font-sans">
-              {modalType === 'terminate_others' 
-                ? 'Are you sure you want to terminate all other active sessions? This will force-logout all other devices currently connected to your account.'
-                : 'Are you sure you want to delete all terminated, expired, or logged-out session records? This action cannot be undone and will permanently purge inactive logs.'}
-            </p>
-            <div className="flex items-center justify-end gap-3 font-sans text-xs">
-              <button
-                type="button"
-                disabled={isBulkRunning}
-                onClick={() => {
-                  setModalOpen(false);
-                  setModalType(null);
-                }}
-                className="px-4 py-2.5 rounded-xl border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700 transition-colors cursor-pointer disabled:opacity-40"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isBulkRunning}
-                onClick={async () => {
-                  setIsBulkRunning(true);
-                  try {
-                    if (modalType === 'terminate_others') {
-                      if (onTerminateOtherSessions) {
-                        await onTerminateOtherSessions();
-                      }
-                    } else {
-                      if (onDeleteInactiveSessions) {
-                        await onDeleteInactiveSessions();
-                      }
-                    }
-                  } catch (e) {
-                    console.error(e);
-                  } finally {
-                    setIsBulkRunning(false);
-                    setModalOpen(false);
-                    setModalType(null);
-                  }
-                }}
-                className={`${getModalConfirmBtnStyle()} text-white font-semibold px-4 py-2.5 rounded-xl transition-all cursor-pointer shadow-lg flex items-center gap-2 disabled:opacity-40`}
-              >
-                {isBulkRunning ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <span>{modalType === 'terminate_others' ? 'Confirm Termination' : 'Confirm Deletion'}</span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={modalOpen}
+        title={modalType === 'terminate_others' ? 'Terminate Other Active Sessions' : 'Delete All Inactive Sessions'}
+        message={modalType === 'terminate_others' 
+          ? 'Are you sure you want to terminate all other active sessions? This will force-logout all other devices currently connected to your account.'
+          : 'Are you sure you want to delete all terminated, expired, or logged-out session records? This action cannot be undone and will permanently purge inactive logs.'}
+        confirmLabel={modalType === 'terminate_others' ? 'Confirm Termination' : 'Confirm Deletion'}
+        cancelLabel="Cancel"
+        onConfirm={async () => {
+          setIsBulkRunning(true);
+          try {
+            if (modalType === 'terminate_others') {
+              if (onTerminateOtherSessions) {
+                await onTerminateOtherSessions();
+              }
+            } else {
+              if (onDeleteInactiveSessions) {
+                await onDeleteInactiveSessions();
+              }
+            }
+          } catch (e) {
+            console.error(e);
+          } finally {
+            setIsBulkRunning(false);
+            setModalOpen(false);
+            setModalType(null);
+          }
+        }}
+        onCancel={() => {
+          setModalOpen(false);
+          setModalType(null);
+        }}
+        isLoading={isBulkRunning}
+        activeTheme={activeTheme}
+        critical={modalType === 'terminate_others'}
+      />
     </div>
   );
 };

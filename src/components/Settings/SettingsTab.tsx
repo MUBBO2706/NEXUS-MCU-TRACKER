@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Download, Upload, Database, RotateCcw, Settings } from 'lucide-react';
 import { CacheProgress } from '../Profile/ProfileTab';
+import { ConfirmationModal } from '../Common/ConfirmationModal';
 
 interface SettingsTabProps {
   activeTheme: 'oled' | 'cosmic' | 'asgardian' | 'wakanda' | 'stark' | 'hydra';
@@ -37,6 +38,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   handleResetProgress,
   setShowDeleteAccountModal,
 }) => {
+  const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
+  const [isPurging, setIsPurging] = useState(false);
+
   return (
     <div className="flex flex-col animate-fadeIn text-left gap-4 font-sans w-full py-1 px-1" id="settings-station-view">
       <div className="flex flex-col gap-1.5 border-b border-neutral-900 pb-4">
@@ -229,13 +233,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               </button>
               <button
                 type="button"
-                onClick={async () => {
-                  if (confirm('Are you sure you want to purge all cached media assets?')) {
-                    await clearCache();
-                    showFeedback('Cache purged completely!', 'info');
-                  }
-                }}
-                disabled={cacheProgress.isSyncing}
+                onClick={() => setShowPurgeConfirm(true)}
+                disabled={cacheProgress.isSyncing || isPurging}
                 className="flex items-center justify-center gap-1.5 bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 text-red-400 font-semibold text-[10px] xs:text-[11px] py-3 rounded-xl transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer w-full"
               >
                 <RotateCcw className="w-3.5 h-3.5 flex-shrink-0" />
@@ -300,6 +299,30 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={showPurgeConfirm}
+        title="Purge Cached Media Assets"
+        message="Are you sure you want to purge all cached media assets? This will clear all downloaded posters and offline assets from local storage."
+        confirmLabel="Purge Cache"
+        cancelLabel="Cancel"
+        onConfirm={async () => {
+          setIsPurging(true);
+          try {
+            await clearCache();
+            showFeedback('Cache purged completely!', 'info');
+          } catch (err) {
+            showFeedback('Failed to purge cache.', 'error');
+          } finally {
+            setIsPurging(false);
+            setShowPurgeConfirm(false);
+          }
+        }}
+        onCancel={() => setShowPurgeConfirm(false)}
+        isLoading={isPurging}
+        activeTheme={activeTheme}
+        critical={true}
+      />
     </div>
   );
 };

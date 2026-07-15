@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Database, Search, ArrowLeft, Eye } from 'lucide-react';
 import { CustomDropdown } from '../CustomDropdown';
+import { CustomDatePicker } from '../Common/CustomDatePicker';
 
 export function renderLogValue(log: any, isNew: boolean, userId?: string) {
   const isPhotoUpdate = log.action === "Profile Photo Updated" || log.action?.toLowerCase().includes("profile photo") || log.action?.toLowerCase().includes("avatar");
@@ -49,122 +50,6 @@ export function renderLogValue(log: any, isNew: boolean, userId?: string) {
   }
 }
 
-interface CustomDatePickerProps {
-  value: string;
-  onChange: (val: string) => void;
-  label: string;
-}
-
-export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ value, onChange, label }) => {
-  const parts = value ? value.split('-') : ['', '', ''];
-  const currentYear = parts[0] || '';
-  const currentMonth = parts[1] || '';
-  const currentDay = parts[2] || '';
-
-  const years = ['2024', '2025', '2026'];
-  const months = [
-    { value: '01', label: 'Jan' },
-    { value: '02', label: 'Feb' },
-    { value: '03', label: 'Mar' },
-    { value: '04', label: 'Apr' },
-    { value: '05', label: 'May' },
-    { value: '06', label: 'Jun' },
-    { value: '07', label: 'Jul' },
-    { value: '08', label: 'Aug' },
-    { value: '09', label: 'Sep' },
-    { value: '10', label: 'Oct' },
-    { value: '11', label: 'Nov' },
-    { value: '12', label: 'Dec' },
-  ];
-
-  const days = Array.from({ length: 31 }, (_, i) => {
-    const d = i + 1;
-    return d < 10 ? `0${d}` : `${d}`;
-  });
-
-  const handlePartChange = (y: string, m: string, d: string) => {
-    if (y || m || d) {
-      const resolvedY = y || '2026';
-      const resolvedM = m || '01';
-      const resolvedD = d || '01';
-      onChange(`${resolvedY}-${resolvedM}-${resolvedD}`);
-    } else {
-      onChange('');
-    }
-  };
-
-  return (
-    <div className="flex flex-col gap-1 w-full text-left">
-      <div className="flex items-center justify-between">
-        <span className="text-[9px] uppercase font-bold text-neutral-500">{label}</span>
-        {value && (
-          <button
-            type="button"
-            onClick={() => onChange('')}
-            className="text-[9px] text-red-400 hover:text-red-300 font-semibold cursor-pointer bg-transparent border-0 p-0"
-          >
-            Clear
-          </button>
-        )}
-      </div>
-      <div className="grid grid-cols-3 gap-1.5 w-full">
-        <select
-          value={currentMonth}
-          onChange={(e) => handlePartChange(currentYear, e.target.value, currentDay)}
-          className="w-full bg-neutral-900 border border-neutral-850 text-[11px] text-white rounded-xl px-1.5 py-2 h-9 focus:border-marvel focus:outline-none cursor-pointer font-sans appearance-none"
-          style={{
-            backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-            backgroundPosition: 'right 4px center',
-            backgroundSize: '12px',
-            backgroundRepeat: 'no-repeat',
-            paddingRight: '16px'
-          }}
-        >
-          <option value="" className="bg-neutral-950 text-neutral-400">Month</option>
-          {months.map(m => (
-            <option key={m.value} value={m.value} className="bg-neutral-950 text-white">{m.label}</option>
-          ))}
-        </select>
-
-        <select
-          value={currentDay}
-          onChange={(e) => handlePartChange(currentYear, currentMonth, e.target.value)}
-          className="w-full bg-neutral-900 border border-neutral-850 text-[11px] text-white rounded-xl px-1.5 py-2 h-9 focus:border-marvel focus:outline-none cursor-pointer font-sans appearance-none"
-          style={{
-            backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-            backgroundPosition: 'right 4px center',
-            backgroundSize: '12px',
-            backgroundRepeat: 'no-repeat',
-            paddingRight: '16px'
-          }}
-        >
-          <option value="" className="bg-neutral-950 text-neutral-400">Day</option>
-          {days.map(d => (
-            <option key={d} value={d} className="bg-neutral-950 text-white">{parseInt(d, 10)}</option>
-          ))}
-        </select>
-
-        <select
-          value={currentYear}
-          onChange={(e) => handlePartChange(e.target.value, currentMonth, currentDay)}
-          className="w-full bg-neutral-900 border border-neutral-850 text-[11px] text-white rounded-xl px-1.5 py-2 h-9 focus:border-marvel focus:outline-none cursor-pointer font-sans appearance-none"
-          style={{
-            backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-            backgroundPosition: 'right 4px center',
-            backgroundSize: '12px',
-            backgroundRepeat: 'no-repeat',
-            paddingRight: '16px'
-          }}
-        >
-          <option value="" className="bg-neutral-950 text-neutral-400">Year</option>
-          {years.map(y => (
-            <option key={y} value={y} className="bg-neutral-950 text-white">{y}</option>
-          ))}
-        </select>
-      </div>
-    </div>
-  );
-};
 
 interface ShieldUpdatesLedgerProps {
   onBack: () => void;
@@ -357,6 +242,7 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
               activeTheme={activeTheme}
               placeholder="All Categories"
               align="left"
+              compact={true}
             />
           </div>
 
@@ -371,6 +257,7 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
               activeTheme={activeTheme}
               placeholder="Sort By"
               align="center"
+              compact={true}
             />
           </div>
 
@@ -385,6 +272,7 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
               activeTheme={activeTheme}
               placeholder="Time Range"
               align="right"
+              compact={true}
             />
           </div>
         </div>
@@ -400,6 +288,7 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
               setPage(1);
             }}
             label="From"
+            activeTheme={activeTheme}
           />
 
           <CustomDatePicker
@@ -409,6 +298,7 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
               setPage(1);
             }}
             label="To"
+            activeTheme={activeTheme}
           />
         </div>
       )}
@@ -436,7 +326,7 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Action</th>
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Old Value</th>
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">New Value</th>
-                    <th className="py-2.5 pl-3 pr-4 sm:pr-6 font-semibold text-left whitespace-nowrap w-[120px]">Agent</th>
+                    <th className="py-2.5 pl-3 pr-4 sm:pr-6 font-semibold text-left whitespace-nowrap w-[120px]">Action By</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-900/40 text-neutral-300">

@@ -14,6 +14,7 @@ interface CustomDropdownProps {
   placeholder: string;
   label?: string;
   align?: 'left' | 'center' | 'right';
+  compact?: boolean;
 }
 
 export const CustomDropdown: React.FC<CustomDropdownProps> = ({
@@ -24,6 +25,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
   placeholder,
   label,
   align = 'left',
+  compact = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -146,7 +148,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`w-full flex items-center justify-between border rounded-xl p-2.5 text-xs text-left focus:outline-none transition-all cursor-pointer overflow-hidden ${themeStyles.button}`}
+        className={`w-full flex items-center justify-between border rounded-xl p-2.5 ${compact ? 'text-[10px]' : 'text-xs'} text-left focus:outline-none transition-all cursor-pointer overflow-hidden ${themeStyles.button}`}
       >
         <span className={`truncate whitespace-nowrap overflow-hidden block flex-1 mr-2 ${selectedOption ? 'text-white font-medium' : 'text-neutral-500'}`}>
           {selectedOption ? selectedOption.label : placeholder}
@@ -185,7 +187,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                     setIsOpen(false);
                   }}
                   onMouseEnter={() => setHighlightedIndex(idx)}
-                  className={`flex items-center justify-between px-4 py-2.5 text-xs cursor-pointer transition-colors whitespace-nowrap gap-3 ${
+                  className={`flex items-center justify-between px-4 py-2.5 ${compact ? 'text-[10px]' : 'text-xs'} cursor-pointer transition-colors whitespace-nowrap gap-3 ${
                     isHighlighted ? themeStyles.highlight : 'text-neutral-300'
                   }`}
                 >

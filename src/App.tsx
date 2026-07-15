@@ -40,6 +40,7 @@ import { CharactersTab } from './components/Characters/CharactersTab';
 import { AnalyticsTab } from './components/Analytics/AnalyticsTab';
 import { ProfileTab } from './components/Profile/ProfileTab';
 import { SettingsTab } from './components/Settings/SettingsTab';
+import { ConfirmationModal } from './components/Common/ConfirmationModal';
 
 // Import Custom Utilities and Hooks
 import { formatToIndianDateTime } from './utils/date';
@@ -610,6 +611,8 @@ export default function App() {
   const [isEditingProfileInPlace, setIsEditingProfileInPlace] = useState(false);
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showResetPasswordConfirm, setShowResetPasswordConfirm] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [restoreProgress, setRestoreProgress] = useState('');
 
@@ -628,6 +631,63 @@ export default function App() {
 
   // Countdown hook
   const countdownString = useCountdown('2027-05-07T00:00:00');
+
+  // Navigation history tracking for "Back to {Previous Page Name}" feature
+  const [navHistory, setNavHistory] = useState<string[]>([]);
+
+  useEffect(() => {
+    setNavHistory(prev => {
+      const currentPath = location.pathname;
+      if (prev[prev.length - 1] === currentPath) {
+        return prev;
+      }
+      const nextHistory = [...prev, currentPath];
+      if (nextHistory.length > 50) {
+        return nextHistory.slice(nextHistory.length - 50);
+      }
+      return nextHistory;
+    });
+  }, [location.pathname]);
+
+  const getPreviousPageName = (): string => {
+    const prevPath = navHistory.length > 1 ? navHistory[navHistory.length - 2] : null;
+    if (!prevPath) return 'Profile';
+    const segs = prevPath.split('/').filter(Boolean);
+    if (segs.length === 0) return 'Dashboard';
+    const first = segs[0];
+    switch (first) {
+      case 'dashboard':
+        return 'Dashboard';
+      case 'movies':
+        return 'Movies';
+      case 'series':
+        return 'Series';
+      case 'timeline':
+        return 'Timeline';
+      case 'characters':
+        return 'Character Codex';
+      case 'analytics':
+        return 'Stats';
+      case 'profile':
+        if (segs[1] === 'sessions') return 'Session Registry';
+        if (segs[1] === 'updates') return 'Updates Ledger';
+        return 'Profile';
+      case 'settings':
+        return 'Settings';
+      default:
+        return 'Dashboard';
+    }
+  };
+
+  const handleBackNavigation = () => {
+    const prevPath = navHistory.length > 1 ? navHistory[navHistory.length - 2] : null;
+    if (prevPath) {
+      setNavHistory(prev => prev.slice(0, -1));
+      navigate(-1);
+    } else {
+      navigate('/profile');
+    }
+  };
 
   // Timeline mode (release order vs chronological timeline order)
   const [timelineMode, setTimelineMode] = useState<'timeline' | 'release'>('release');
@@ -989,7 +1049,7 @@ export default function App() {
     }
   };
 
-  const handleResetPasswordForm = async (e: React.FormEvent) => {
+  const handleResetPasswordForm = (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword || !newPassword) {
       showFeedback('Current password and new password are required.', 'error');
@@ -999,7 +1059,10 @@ export default function App() {
       showFeedback('New password must be at least 4 characters.', 'error');
       return;
     }
+    setShowResetPasswordConfirm(true);
+  };
 
+  const executeResetPassword = async () => {
     setIsResettingPassword(true);
     try {
       const res = await fetch('/api/user/reset-password', {
@@ -1023,6 +1086,7 @@ export default function App() {
       showFeedback('Network error updating password.', 'error');
     } finally {
       setIsResettingPassword(false);
+      setShowResetPasswordConfirm(false);
     }
   };
 
@@ -1342,15 +1406,17 @@ export default function App() {
 
   // Reset core progress
   const handleResetProgress = () => {
-    if (confirm('⚠️ Warning: This will delete all of your completed watch history, rating metrics, notes, and achievements. Proceed?')) {
-      localStorage.clear();
-      setWatchData({});
-      setUnlockedAchievements([]);
-      setFavoritePhase('');
-      setFavoriteCharacter('');
-      setDeveloperMode(false);
-      window.location.reload();
-    }
+    setShowResetConfirm(true);
+  };
+
+  const executeResetProgress = () => {
+    localStorage.clear();
+    setWatchData({});
+    setUnlockedAchievements([]);
+    setFavoritePhase('');
+    setFavoriteCharacter('');
+    setDeveloperMode(false);
+    window.location.reload();
   };
 
   // Filter computation for movies & series list
@@ -1508,15 +1574,12 @@ export default function App() {
         <div className="w-full flex items-center justify-between gap-4">
           {(showAllSessions || showAllUpdates) ? (
             <button
-              onClick={() => {
-                setShowAllSessions(false);
-                setShowAllUpdates(false);
-              }}
+              onClick={handleBackNavigation}
               className="flex items-center gap-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-300 hover:text-white transition-all focus:outline-none cursor-pointer bg-transparent border-0 py-1 pr-3 pl-0 hover:translate-x-[-2px] min-h-[36px] touch-manipulation"
-              title="Back to Profile"
+              title={`Back to ${getPreviousPageName()}`}
             >
               <ArrowLeft className="w-5 h-5 text-marvel animate-fadeIn" />
-              <span>Back</span>
+              <span>Back to {getPreviousPageName()}</span>
             </button>
           ) : (
             <button
@@ -1936,16 +1999,17 @@ export default function App() {
       {/* Reset Password Modal */}
       <AnimatePresence>
         {showResetPasswordModal && (
-          <div className="fixed inset-0 bg-black/96 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-neutral-950 border border-neutral-800 rounded-2xl p-5 w-full max-w-md shadow-2xl flex flex-col gap-4 relative text-left"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="bg-neutral-950 border border-neutral-850 max-w-md w-full rounded-2xl p-6 shadow-2xl text-left relative"
             >
-              <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
-                <h3 className="font-display font-bold text-sm uppercase tracking-wider text-white flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-marvel" />
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display font-bold text-base sm:text-lg text-white flex items-center gap-2">
+                  <KeyRound className="w-5 h-5 text-marvel" />
                   Reset Security Credentials
                 </h3>
                 <button
@@ -1972,7 +2036,7 @@ export default function App() {
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full bg-neutral-900 border border-neutral-800 focus:border-marvel rounded-lg pl-3.5 pr-10 py-2.5 text-xs text-white focus:outline-none"
+                      className="w-full bg-neutral-900 border border-neutral-850 focus:border-marvel rounded-lg pl-3.5 pr-10 py-2.5 text-xs text-white focus:outline-none transition-all"
                     />
                     <button
                       type="button"
@@ -1993,7 +2057,7 @@ export default function App() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full bg-neutral-900 border border-neutral-800 focus:border-marvel rounded-lg pl-3.5 pr-10 py-2.5 text-xs text-white focus:outline-none"
+                      className="w-full bg-neutral-900 border border-neutral-850 focus:border-marvel rounded-lg pl-3.5 pr-10 py-2.5 text-xs text-white focus:outline-none transition-all"
                     />
                     <button
                       type="button"
@@ -2006,7 +2070,7 @@ export default function App() {
                   <span className="text-[9px] text-neutral-500">Minimum 4 characters required.</span>
                 </div>
 
-                <div className="flex gap-3 mt-2 justify-end">
+                <div className="flex items-center justify-end gap-2.5 font-sans text-[11px] mt-2">
                   <button
                     type="button"
                     onClick={() => {
@@ -2016,16 +2080,23 @@ export default function App() {
                       setShowCurrentPassword(false);
                       setShowNewPassword(false);
                     }}
-                    className="bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-white font-semibold text-xs px-4 py-2.5 rounded-lg transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700 transition-colors cursor-pointer disabled:opacity-40 focus:outline-none"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isResettingPassword}
-                    className="bg-marvel hover:bg-marvel/90 disabled:opacity-50 text-white font-semibold text-xs px-4 py-2.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                    className="bg-red-600 hover:bg-red-500 shadow-red-950/20 text-white font-semibold px-3.5 py-2 rounded-lg transition-all cursor-pointer shadow-lg flex items-center gap-1.5 disabled:opacity-40 focus:outline-none"
                   >
-                    {isResettingPassword ? "Resetting..." : "Reset Password"}
+                    {isResettingPassword ? (
+                      <>
+                        <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                        <span>Resetting...</span>
+                      </>
+                    ) : (
+                      <span>Reset Password</span>
+                    )}
                   </button>
                 </div>
               </form>
@@ -2037,14 +2108,14 @@ export default function App() {
       {/* Delete Account Modal */}
       <AnimatePresence>
         {showDeleteAccountModal && (
-          <div className="fixed inset-0 bg-black/96 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-neutral-950 border border-red-950 rounded-2xl p-5 w-full max-w-md shadow-2xl flex flex-col gap-4 relative text-left"
+              className="bg-neutral-950 border border-neutral-850 rounded-2xl p-6 w-full max-w-md shadow-2xl flex flex-col gap-4 relative text-left"
             >
-              <div className="flex items-center justify-between border-b border-red-950/40 pb-3">
+              <div className="flex items-center justify-between border-b border-neutral-900 pb-3">
                 <h3 className="font-display font-bold text-sm uppercase tracking-wider text-rose-500 flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-rose-500" />
                   Delete Agent Profile
@@ -2087,7 +2158,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="flex gap-3 mt-3 justify-end">
+                <div className="flex gap-2.5 mt-3 justify-end font-sans text-[11px]">
                   <button
                     type="button"
                     onClick={() => {
@@ -2095,14 +2166,14 @@ export default function App() {
                       setDeletePassword('');
                       setShowDeletePassword(false);
                     }}
-                    className="bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-white font-semibold text-xs px-4 py-2.5 rounded-lg transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700 transition-colors cursor-pointer focus:outline-none"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleDeleteAccountForm}
                     disabled={isDeletingAccount}
-                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold text-xs px-4 py-2.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold px-3.5 py-2 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 focus:outline-none"
                   >
                     {isDeletingAccount ? "Deleting..." : "Confirm Delete"}
                   </button>
@@ -2112,6 +2183,30 @@ export default function App() {
           </div>
         )}
       </AnimatePresence>
+
+      <ConfirmationModal
+        isOpen={showResetConfirm}
+        title="Reset Application Progress"
+        message="⚠️ Warning: This will delete all of your completed watch history, rating metrics, notes, and achievements. Proceed?"
+        confirmLabel="Reset Application"
+        cancelLabel="Cancel"
+        onConfirm={executeResetProgress}
+        onCancel={() => setShowResetConfirm(false)}
+        activeTheme={activeTheme}
+        critical={true}
+      />
+
+      <ConfirmationModal
+        isOpen={showResetPasswordConfirm}
+        title="Confirm Password Change"
+        message="Are you sure you want to update your security credentials? You will be logged out of other active sessions."
+        confirmLabel="Confirm"
+        cancelLabel="Cancel"
+        onConfirm={executeResetPassword}
+        onCancel={() => setShowResetPasswordConfirm(false)}
+        isLoading={isResettingPassword}
+        activeTheme={activeTheme}
+      />
 
     </div>
   );

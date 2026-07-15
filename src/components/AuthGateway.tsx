@@ -74,14 +74,15 @@ export function AuthGateway({
       <div className="absolute bottom-10 left-10 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-neutral-900/60 backdrop-blur-md border border-neutral-800 rounded-3xl p-6 md:p-8 shadow-2xl relative z-10 space-y-6"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className="w-full max-w-md bg-neutral-950 border border-neutral-850 rounded-2xl p-6 md:p-8 shadow-2xl relative z-10 space-y-6 text-left animate-scaleUp"
       >
         {/* Emblem Shield Banner */}
         <div className="flex flex-col items-center text-center space-y-2">
-          <div className="w-14 h-14 rounded-full bg-neutral-950 border border-neutral-800 flex items-center justify-center text-marvel shadow-inner">
-            <Shield className="w-7 h-7 text-marvel" />
+          <div className="w-14 h-14 rounded-full bg-neutral-950 border border-neutral-850 flex items-center justify-center text-marvel shadow-inner">
+            <Shield className="w-7 h-7 text-marvel animate-pulse" />
           </div>
           <div>
             <span className="text-[10px] uppercase font-mono tracking-widest text-marvel font-black">
@@ -113,7 +114,7 @@ export function AuthGateway({
                     placeholder="Enter your full name"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-neutral-950 text-white text-xs border border-neutral-800 rounded-xl pl-9 pr-3 py-3 focus:border-marvel focus:outline-none transition-colors"
+                    className="w-full bg-neutral-900 text-white text-xs border border-neutral-850 rounded-xl pl-9 pr-3 py-3 focus:border-marvel focus:outline-none transition-colors"
                     disabled={isSubmitting}
                     required={authMode === 'register'}
                   />
@@ -133,7 +134,7 @@ export function AuthGateway({
                 placeholder="Enter agent code or name"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-neutral-950 text-white text-xs border border-neutral-800 rounded-xl pl-9 pr-3 py-3 focus:border-marvel focus:outline-none transition-colors"
+                className="w-full bg-neutral-900 text-white text-xs border border-neutral-850 rounded-xl pl-9 pr-3 py-3 focus:border-marvel focus:outline-none transition-colors"
                 disabled={isSubmitting}
                 required
               />
@@ -151,7 +152,7 @@ export function AuthGateway({
                 placeholder="Minimum 4 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-neutral-950 text-white text-xs border border-neutral-800 rounded-xl pl-9 pr-10 py-3 focus:border-marvel focus:outline-none transition-colors"
+                className="w-full bg-neutral-900 text-white text-xs border border-neutral-850 rounded-xl pl-9 pr-10 py-3 focus:border-marvel focus:outline-none transition-colors"
                 disabled={isSubmitting}
                 required
               />
@@ -183,7 +184,7 @@ export function AuthGateway({
           {/* Submit Action */}
           <button
             type="submit"
-            className="w-full bg-marvel hover:bg-red-600 disabled:bg-neutral-800 disabled:text-neutral-500 text-white font-bold text-xs py-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full bg-red-600 hover:bg-red-500 disabled:bg-neutral-900 disabled:text-neutral-500 text-white font-semibold text-xs py-3 rounded-xl transition-all shadow-lg shadow-red-950/20 flex items-center justify-center gap-2 cursor-pointer focus:outline-none"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
@@ -280,7 +281,7 @@ export function AuthGateway({
             {/* Offline Bypass Option */}
             <button
               onClick={onBypass}
-              className="w-full bg-neutral-950 border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-900 text-white text-[11px] font-bold py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              className="w-full bg-neutral-900 border border-neutral-850 hover:border-neutral-700 hover:bg-neutral-850 text-white text-[11px] font-semibold py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none shadow-md"
             >
               <Zap className="w-3.5 h-3.5 text-amber-400" />
               <span>Bypass & Enter Sandbox Mode</span>
