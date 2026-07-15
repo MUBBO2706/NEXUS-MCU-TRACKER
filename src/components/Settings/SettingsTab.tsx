@@ -122,18 +122,18 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         </div>
       </div>
 
-      {/* Grid for lower settings sections on Desktop */}
-      <div className="flex flex-col gap-8 pt-6 border-t border-neutral-900/60" id="settings-grid-sections">
-        {/* Row 1 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+      {/* Grid for lower settings sections on Desktop using elegant column layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-neutral-900/60" id="settings-grid-sections">
+        {/* Column 1: Left */}
+        <div className="flex flex-col gap-8">
           {/* Backups & Sync System */}
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <span className="text-xs uppercase font-bold text-neutral-400 tracking-wider font-display">
-                Backups & Sync System
+                Backups &amp; Sync System
               </span>
               <p className="text-[10px] text-neutral-400 leading-relaxed text-left">
-                Export or restore your offline S.H.I.E.L.D. database JSON files locally to synchronize progress across active stations.
+                Export or restore your offline S.H.I-E.L.D. database JSON files locally to synchronize progress across active stations.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -168,6 +168,40 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
           </div>
 
+          {/* Application & Account Management */}
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <span className="text-xs uppercase font-bold text-neutral-400 tracking-wider font-display">
+                Application &amp; Account Management
+              </span>
+              <p className="text-[10px] text-neutral-400 leading-relaxed text-left">
+                Reset your application status, clear offline state, or permanently delete your cloud account from S.H.I.E.L.D. registry.
+              </p>
+            </div>
+            <div className={`grid gap-3 w-full ${authToken ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              <button
+                type="button"
+                onClick={handleResetProgress}
+                className="w-full bg-red-600/10 hover:bg-red-600/20 text-red-500 font-semibold text-xs py-3.5 rounded-xl border border-red-500/20 transition-colors focus:outline-none cursor-pointer"
+              >
+                Reset Application
+              </button>
+
+              {authToken && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteAccountModal(true)}
+                  className="w-full bg-rose-600/10 hover:bg-rose-600/20 text-rose-500 font-semibold text-xs py-3.5 rounded-xl border border-rose-500/20 transition-colors focus:outline-none cursor-pointer"
+                >
+                  Delete Account
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Column 2: Right */}
+        <div className="flex flex-col gap-8">
           {/* S.H.I.E.L.D. Intel Caching Engine */}
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-3">
@@ -240,40 +274,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <RotateCcw className="w-3.5 h-3.5 flex-shrink-0" />
                 Purge Cache
               </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Row 2 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-          {/* Application & Account Management */}
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <span className="text-xs uppercase font-bold text-neutral-400 tracking-wider font-display">
-                Application &amp; Account Management
-              </span>
-              <p className="text-[10px] text-neutral-400 leading-relaxed text-left">
-                Reset your application status, clear offline state, or permanently delete your cloud account from S.H.I.E.L.D. registry.
-              </p>
-            </div>
-            <div className={`grid gap-3 w-full ${authToken ? 'grid-cols-2' : 'grid-cols-1'}`}>
-              <button
-                type="button"
-                onClick={handleResetProgress}
-                className="w-full bg-red-600/10 hover:bg-red-600/20 text-red-500 font-semibold text-xs py-3.5 rounded-xl border border-red-500/20 transition-colors focus:outline-none cursor-pointer"
-              >
-                Reset Application
-              </button>
-
-              {authToken && (
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteAccountModal(true)}
-                  className="w-full bg-rose-600/10 hover:bg-rose-600/20 text-rose-500 font-semibold text-xs py-3.5 rounded-xl border border-rose-500/20 transition-colors focus:outline-none cursor-pointer"
-                >
-                  Delete Account
-                </button>
-              )}
             </div>
           </div>
 

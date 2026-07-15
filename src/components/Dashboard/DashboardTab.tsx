@@ -190,36 +190,40 @@ export function DashboardTab({
                 </span>
               </div>
 
-              <div className="flex items-start gap-3.5">
-                <LazyImage
-                  src={nextRecommendation.posterUrl}
-                  alt={nextRecommendation.title}
-                  className="w-16 aspect-[2/3] rounded-lg border border-neutral-800"
-                />
-                <div className="flex-grow flex flex-col justify-between min-h-[6.5rem] py-0.5 min-w-0">
-                  <div className="space-y-1 min-w-0">
-                    <h4 className="font-display font-bold text-xs sm:text-sm text-white leading-tight truncate whitespace-nowrap">
-                      {nextRecommendation.title}
-                    </h4>
-                    <p className="text-[10px] text-neutral-400">
-                      {nextRecommendation.type === 'movie' ? 'Movie' : 'TV Series'} • {nextRecommendation.releaseYear} • {nextRecommendation.runtimeMinutes} min
-                    </p>
-                    <div className="flex items-center gap-1.5 flex-wrap pt-0.5 font-mono text-[8px] tracking-tight">
-                      <span className="bg-neutral-900/80 border border-neutral-800 text-neutral-400 px-1.5 py-0.5 rounded whitespace-nowrap">
-                        Phase {nextRecommendation.phase}
-                      </span>
-                      <span className="bg-neutral-900/80 border border-neutral-800 text-neutral-400 px-1.5 py-0.5 rounded whitespace-nowrap">
-                        {orderingMode === 'theatrical' ? 'Theatrical' : 'Timeline'} #{orderIndex}
-                      </span>
-                      <span className="bg-neutral-900/80 border border-neutral-800 text-neutral-400 px-1.5 py-0.5 rounded whitespace-nowrap uppercase">
-                        IMDb {nextRecommendation.ratings.imdb}
-                      </span>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start gap-3.5 min-w-0 flex-grow">
+                  <LazyImage
+                    src={nextRecommendation.posterUrl}
+                    alt={nextRecommendation.title}
+                    className="w-16 aspect-[2/3] rounded-lg border border-neutral-800 flex-shrink-0"
+                  />
+                  <div className="flex-grow flex flex-col justify-center min-h-[6.5rem] py-0.5 min-w-0">
+                    <div className="space-y-1.5 min-w-0">
+                      <h4 className="font-display font-bold text-xs sm:text-sm text-white leading-tight truncate whitespace-nowrap">
+                        {nextRecommendation.title}
+                      </h4>
+                      <p className="text-[10px] text-neutral-400">
+                        {nextRecommendation.type === 'movie' ? 'Movie' : 'TV Series'} • {nextRecommendation.releaseYear} • {nextRecommendation.runtimeMinutes} min
+                      </p>
+                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5 font-mono text-[8px] tracking-tight">
+                        <span className="bg-neutral-900/80 border border-neutral-800 text-neutral-400 px-1.5 py-0.5 rounded whitespace-nowrap">
+                          Phase {nextRecommendation.phase}
+                        </span>
+                        <span className="bg-neutral-900/80 border border-neutral-800 text-neutral-400 px-1.5 py-0.5 rounded whitespace-nowrap">
+                          {orderingMode === 'theatrical' ? 'Theatrical' : 'Timeline'} #{orderIndex}
+                        </span>
+                        <span className="bg-neutral-900/80 border border-neutral-800 text-neutral-400 px-1.5 py-0.5 rounded whitespace-nowrap uppercase">
+                          IMDb {nextRecommendation.ratings.imdb}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                </div>
 
+                <div className="flex-shrink-0 w-full md:w-auto">
                   <button
                     onClick={() => handleSelectMovieId(nextRecommendation.id)}
-                    className="w-full md:w-max md:px-5 bg-marvel text-white font-semibold text-xs py-2 rounded-xl hover:bg-red-600 transition-colors text-center font-sans mt-2 cursor-pointer"
+                    className="w-full md:w-max md:px-5 bg-marvel text-white font-semibold text-xs py-2 h-10 rounded-xl hover:bg-red-600 transition-colors text-center font-sans cursor-pointer whitespace-nowrap flex items-center justify-center"
                   >
                     Inspect Detailed Intel
                   </button>

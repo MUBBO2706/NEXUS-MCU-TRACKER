@@ -280,26 +280,30 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
 
       {/* Custom Range: Additional Custom Selectors */}
       {timeRange === 'custom' && (
-        <div className="grid grid-cols-2 gap-3 mt-1.5 animate-fadeIn z-10">
-          <CustomDatePicker
-            value={startDate}
-            onChange={(val) => {
-              setStartDate(val);
-              setPage(1);
-            }}
-            label="From"
-            activeTheme={activeTheme}
-          />
+        <div className="flex flex-row items-center gap-3 mt-1.5 animate-fadeIn z-10 w-full md:w-auto">
+          <div className="w-1/2 md:w-44">
+            <CustomDatePicker
+              value={startDate}
+              onChange={(val) => {
+                setStartDate(val);
+                setPage(1);
+              }}
+              label="From"
+              activeTheme={activeTheme}
+            />
+          </div>
 
-          <CustomDatePicker
-            value={endDate}
-            onChange={(val) => {
-              setEndDate(val);
-              setPage(1);
-            }}
-            label="To"
-            activeTheme={activeTheme}
-          />
+          <div className="w-1/2 md:w-44">
+            <CustomDatePicker
+              value={endDate}
+              onChange={(val) => {
+                setEndDate(val);
+                setPage(1);
+              }}
+              label="To"
+              activeTheme={activeTheme}
+            />
+          </div>
         </div>
       )}
 

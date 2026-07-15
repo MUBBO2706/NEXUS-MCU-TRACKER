@@ -1573,14 +1573,27 @@ export default function App() {
       <header className="fixed top-0 left-0 right-0 z-40 bg-black/85 backdrop-blur-md border-b border-neutral-900 px-4 py-3 md:py-3.5 flex items-center shadow-md h-14 md:h-16">
         <div className="w-full flex items-center justify-between gap-4">
           {(showAllSessions || showAllUpdates) ? (
-            <button
-              onClick={handleBackNavigation}
-              className="flex items-center gap-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-300 hover:text-white transition-all focus:outline-none cursor-pointer bg-transparent border-0 py-1 pr-3 pl-0 hover:translate-x-[-2px] min-h-[36px] touch-manipulation"
-              title={`Back to ${getPreviousPageName()}`}
-            >
-              <ArrowLeft className="w-5 h-5 text-marvel animate-fadeIn" />
-              <span>Back to {getPreviousPageName()}</span>
-            </button>
+            <>
+              {/* Visible on Mobile only */}
+              <button
+                onClick={handleBackNavigation}
+                className="flex md:hidden items-center gap-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-300 hover:text-white transition-all focus:outline-none cursor-pointer bg-transparent border-0 py-1 pr-3 pl-0 hover:translate-x-[-2px] min-h-[36px] touch-manipulation"
+                title={`Back to ${getPreviousPageName()}`}
+              >
+                <ArrowLeft className="w-5 h-5 text-marvel animate-fadeIn" />
+                <span>Back to {getPreviousPageName()}</span>
+              </button>
+
+              {/* Hidden on Mobile, Visible on Desktop: show branding logo */}
+              <button
+                onClick={handleStanLeeTap}
+                className="hidden md:flex items-center gap-2 focus:outline-none flex-shrink-0"
+              >
+                <span className="font-display font-black text-lg tracking-tighter bg-marvel text-white px-2 py-0.5 rounded italic">
+                  MARVEL
+                </span>
+              </button>
+            </>
           ) : (
             <button
               onClick={handleStanLeeTap}
