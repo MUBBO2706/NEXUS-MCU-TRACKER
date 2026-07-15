@@ -252,6 +252,72 @@ export default function App() {
     }
   };
 
+  const currentSessionId = React.useMemo(() => {
+    if (!authToken) return null;
+    try {
+      const parts = authToken.split('.');
+      if (parts.length < 2) return null;
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return payload.sessionId || null;
+    } catch (e) {
+      return null;
+    }
+  }, [authToken]);
+
+  const handleTerminateSession = async (sessionId: string) => {
+    if (!authToken) return;
+    try {
+      const res = await fetch('/api/auth/terminate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ sessionIdToTerminate: sessionId })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setUser((prev: any) => ({ ...prev, sessions: data.sessions }));
+          showFeedback('Session terminated successfully.', 'success');
+        } else {
+          showFeedback(data.error || 'Failed to terminate session.', 'error');
+        }
+      } else {
+        showFeedback('Failed to terminate session.', 'error');
+      }
+    } catch (err: any) {
+      console.error("Failed to terminate session:", err);
+      showFeedback('Connection error.', 'error');
+    }
+  };
+
+  const handleTerminateOtherSessions = async () => {
+    if (!authToken) return;
+    try {
+      const res = await fetch('/api/auth/terminate-others', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setUser((prev: any) => ({ ...prev, sessions: data.sessions }));
+          showFeedback('All other sessions terminated.', 'success');
+        } else {
+          showFeedback(data.error || 'Failed to terminate sessions.', 'error');
+        }
+      } else {
+        showFeedback('Failed to terminate sessions.', 'error');
+      }
+    } catch (err: any) {
+      console.error("Failed to terminate sessions:", err);
+      showFeedback('Connection error.', 'error');
+    }
+  };
+
   const handleLogin = async (usernameInput: string, passwordInput: string) => {
     if (!usernameInput || !passwordInput) {
       setAuthError('Username and password are required.');
@@ -1702,6 +1768,9 @@ export default function App() {
                   startPreCaching={startPreCaching}
                   clearCache={clearCache}
                   developerMode={developerMode}
+                  currentSessionId={currentSessionId}
+                  onTerminateSession={handleTerminateSession}
+                  onTerminateOtherSessions={handleTerminateOtherSessions}
                 />
               )}
 

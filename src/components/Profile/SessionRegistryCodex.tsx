@@ -8,6 +8,9 @@ interface SessionRegistryCodexProps {
   user: any;
   activeTheme: 'oled' | 'cosmic' | 'asgardian' | 'wakanda' | 'stark' | 'hydra';
   formatToIndianDateTime: (timestamp: number | string) => string;
+  currentSessionId?: string | null;
+  onTerminateSession?: (sessionId: string) => Promise<void>;
+  onTerminateOtherSessions?: () => Promise<void>;
 }
 
 export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
@@ -15,6 +18,9 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
   user,
   activeTheme,
   formatToIndianDateTime,
+  currentSessionId,
+  onTerminateSession,
+  onTerminateOtherSessions,
 }) => {
   // Local States
   const [searchQuery, setSearchQuery] = useState('');
@@ -148,14 +154,29 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
 
   return (
     <div className="flex flex-col animate-fadeIn text-left gap-2 font-sans w-full py-1 px-1" id="session-registry-codex-expanded">
-      <div className="flex flex-col gap-1 text-left">
-        <h2 className="font-display font-bold text-2xl tracking-tight text-white flex items-center gap-2">
-          <Eye className={`${themeStyles.marvelIcon} w-6 h-6`} />
-          Session Registry Codex
-        </h2>
-        <p className="font-sans text-xs text-neutral-400">
-          Audit all security sessions, client devices, and authentication states for Agent @{user?.username || 'sandbox_mode'}.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left">
+        <div className="flex flex-col gap-1 text-left">
+          <h2 className="font-display font-bold text-2xl tracking-tight text-white flex items-center gap-2">
+            <Eye className={`${themeStyles.marvelIcon} w-6 h-6`} />
+            Session Registry Codex
+          </h2>
+          <p className="font-sans text-xs text-neutral-400">
+            Audit all security sessions, client devices, and authentication states for Agent @{user?.username || 'sandbox_mode'}.
+          </p>
+        </div>
+        {onTerminateOtherSessions && sessions.filter((s: any) => s.status === 'Active' && s.sessionId !== currentSessionId).length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm('Are you sure you want to terminate all other active sessions? This will force-logout other connected devices.')) {
+                onTerminateOtherSessions();
+              }
+            }}
+            className="bg-red-950/40 hover:bg-red-900/60 border border-red-900/60 hover:border-red-500 text-red-200 text-[10px] font-bold uppercase tracking-wider px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-md shrink-0 font-mono"
+          >
+            Terminate Other Sessions
+          </button>
+        )}
       </div>
 
       {/* Search and Filters Group */}
@@ -267,7 +288,8 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Browser</th>
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Operating System</th>
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Duration</th>
-                    <th className="py-2.5 pl-3 pr-4 sm:pr-6 font-semibold text-left whitespace-nowrap">Status</th>
+                    <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Status</th>
+                    {onTerminateSession && <th className="py-2.5 pl-3 pr-4 sm:pr-6 font-semibold text-left whitespace-nowrap">Actions</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-900/40 text-neutral-300">
@@ -291,7 +313,7 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
                           : 'Active now'
                         }
                       </td>
-                      <td className="py-2.5 pl-3 pr-4 sm:pr-6 text-left whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-left whitespace-nowrap">
                         <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border ${
                           session.status === 'Active'
                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
@@ -302,6 +324,29 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
                           {session.status}
                         </span>
                       </td>
+                      {onTerminateSession && (
+                        <td className="py-2.5 pl-3 pr-4 sm:pr-6 text-left whitespace-nowrap">
+                          {session.status === 'Active' ? (
+                            session.sessionId === currentSessionId ? (
+                              <span className="text-emerald-400 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border border-emerald-500/20 bg-emerald-500/5">Current Session</span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (window.confirm(`Are you sure you want to terminate this active session (OS: ${session.os}, Browser: ${session.browser})?`)) {
+                                    onTerminateSession(session.sessionId);
+                                  }
+                                }}
+                                className="text-red-500 hover:text-red-400 font-bold hover:underline cursor-pointer text-[8px] uppercase tracking-wider"
+                              >
+                                Terminate
+                              </button>
+                            )
+                          ) : (
+                            <span className="text-neutral-500 text-[10px]">—</span>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

@@ -65,6 +65,9 @@ interface ProfileTabProps {
   startPreCaching: (force?: boolean) => Promise<void>;
   clearCache: () => Promise<void>;
   developerMode: boolean;
+  currentSessionId?: string | null;
+  onTerminateSession?: (sessionId: string) => Promise<void>;
+  onTerminateOtherSessions?: () => Promise<void>;
 }
 
 export function ProfileTab({
@@ -119,6 +122,9 @@ export function ProfileTab({
   startPreCaching,
   clearCache,
   developerMode,
+  currentSessionId,
+  onTerminateSession,
+  onTerminateOtherSessions,
 }: ProfileTabProps) {
   return (
     <>
@@ -137,6 +143,9 @@ export function ProfileTab({
           user={user}
           activeTheme={activeTheme}
           formatToIndianDateTime={formatToIndianDateTime}
+          currentSessionId={currentSessionId}
+          onTerminateSession={onTerminateSession}
+          onTerminateOtherSessions={onTerminateOtherSessions}
         />
       ) : (
         <div className="flex flex-col gap-4 font-sans w-full py-1 px-1 text-left animate-fadeIn" id="profile-main-container">

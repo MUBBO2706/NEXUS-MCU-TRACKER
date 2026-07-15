@@ -401,6 +401,12 @@ app.get("/api/auth/status", (req, res) => {
       // Fetch user's individual JSON file using the User ID lookup flow to verify retrieval integrity
       const userFile = await telegramDb.fetchUserFile(token, chatId, decoded.userId);
 
+      // Verify that the current session is indeed still Active in the database
+      const currentSession = userFile.sessions?.find(s => s.sessionId === decoded.sessionId);
+      if (!currentSession || currentSession.status !== "Active") {
+        return res.status(401).json({ error: "Unauthorized: Session has been terminated or expired" });
+      }
+
       res.json({
         success: true,
         user: {
@@ -471,6 +477,143 @@ app.get("/api/auth/status", (req, res) => {
     }
   });
 
+  // Terminate a specific session (Revocation)
+  app.post("/api/auth/terminate", async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Unauthorized: Missing token" });
+    }
+
+    const sessionToken = authHeader.split(" ")[1];
+
+    try {
+      const { token, chatId, secret } = telegramDb.getTelegramConfig();
+
+      const decoded = telegramDb.verifyToken(sessionToken, secret);
+      if (!decoded || !decoded.userId || !decoded.sessionId) {
+        return res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
+      }
+
+      const { sessionIdToTerminate } = req.body;
+      if (!sessionIdToTerminate) {
+        return res.status(400).json({ error: "Session ID to terminate is required" });
+      }
+
+      const result = await telegramDb.lockDatabase(async () => {
+        // Fetch user's individual JSON file
+        const userFile = await telegramDb.fetchUserFile(token, chatId, decoded.userId, true);
+
+        // Check if current session is active
+        const currentSession = userFile.sessions?.find(s => s.sessionId === decoded.sessionId);
+        if (!currentSession || currentSession.status !== "Active") {
+          throw new Error("UNAUTHORIZED_SESSION_INACTIVE");
+        }
+
+        if (userFile.sessions) {
+          const sessionIndex = userFile.sessions.findIndex(s => s.sessionId === sessionIdToTerminate);
+          if (sessionIndex !== -1) {
+            const s = userFile.sessions[sessionIndex];
+            if (s.status === "Active") {
+              s.status = "Terminated";
+              s.endedAt = Date.now();
+              s.durationSeconds = Math.round((s.endedAt - s.startedAt) / 1000);
+              userFile.lastUpdated = Date.now();
+
+              // Add a security audit log
+              addUpdateLog(userFile, {
+                action: "Session Terminated",
+                previousValue: "ACTIVE",
+                newValue: `TERMINATED (OS: ${s.os}, Browser: ${s.browser})`,
+                source: "Settings",
+                userPerformed: userFile.username,
+                metadata: { terminatedSessionId: sessionIdToTerminate }
+              });
+
+              // Upload updated JSON file to Telegram
+              await telegramDb.updateUserFileAndIndex(token, chatId, decoded.userId, userFile);
+            }
+          }
+        }
+        return userFile.sessions || [];
+      });
+
+      res.json({ success: true, sessions: result });
+    } catch (err: any) {
+      console.error("Terminate session error:", err);
+      if (err.message === "UNAUTHORIZED_SESSION_INACTIVE") {
+        return res.status(401).json({ error: "Unauthorized: Session has been terminated or expired" });
+      }
+      res.status(500).json({ error: `Failed to terminate session: ${err.message}` });
+    }
+  });
+
+  // Terminate all other sessions except the current one
+  app.post("/api/auth/terminate-others", async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Unauthorized: Missing token" });
+    }
+
+    const sessionToken = authHeader.split(" ")[1];
+
+    try {
+      const { token, chatId, secret } = telegramDb.getTelegramConfig();
+
+      const decoded = telegramDb.verifyToken(sessionToken, secret);
+      if (!decoded || !decoded.userId || !decoded.sessionId) {
+        return res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
+      }
+
+      const result = await telegramDb.lockDatabase(async () => {
+        // Fetch user's individual JSON file
+        const userFile = await telegramDb.fetchUserFile(token, chatId, decoded.userId, true);
+
+        // Check if current session is active
+        const currentSession = userFile.sessions?.find(s => s.sessionId === decoded.sessionId);
+        if (!currentSession || currentSession.status !== "Active") {
+          throw new Error("UNAUTHORIZED_SESSION_INACTIVE");
+        }
+
+        let terminatedCount = 0;
+        if (userFile.sessions) {
+          userFile.sessions.forEach(s => {
+            if (s.sessionId !== decoded.sessionId && s.status === "Active") {
+              s.status = "Terminated";
+              s.endedAt = Date.now();
+              s.durationSeconds = Math.round((s.endedAt - s.startedAt) / 1000);
+              terminatedCount++;
+            }
+          });
+
+          if (terminatedCount > 0) {
+            userFile.lastUpdated = Date.now();
+
+            // Add security audit log
+            addUpdateLog(userFile, {
+              action: "Other Sessions Terminated",
+              previousValue: "ACTIVE",
+              newValue: `TERMINATED ${terminatedCount} OTHER SESSIONS`,
+              source: "Settings",
+              userPerformed: userFile.username,
+            });
+
+            // Upload updated JSON file to Telegram
+            await telegramDb.updateUserFileAndIndex(token, chatId, decoded.userId, userFile);
+          }
+        }
+        return userFile.sessions || [];
+      });
+
+      res.json({ success: true, sessions: result });
+    } catch (err: any) {
+      console.error("Terminate others error:", err);
+      if (err.message === "UNAUTHORIZED_SESSION_INACTIVE") {
+        return res.status(401).json({ error: "Unauthorized: Session has been terminated or expired" });
+      }
+      res.status(500).json({ error: `Failed to terminate other sessions: ${err.message}` });
+    }
+  });
+
   // Update User state / data synced to Telegram
   app.post("/api/user/update", async (req, res) => {
     const authHeader = req.headers.authorization;
@@ -493,6 +636,12 @@ app.get("/api/auth/status", (req, res) => {
       const resultUser = await telegramDb.lockDatabase(async () => {
         // Fetch user's individual JSON file
         const userFile = await telegramDb.fetchUserFile(token, chatId, decoded.userId, true);
+
+        // Verify active session
+        const currentSession = userFile.sessions?.find(s => s.sessionId === decoded.sessionId);
+        if (!currentSession || currentSession.status !== "Active") {
+          throw new Error("UNAUTHORIZED_SESSION_INACTIVE");
+        }
 
         const oldWatchData = userFile.watchData || {};
         const oldAchievements = userFile.unlockedAchievements || [];
@@ -660,6 +809,9 @@ app.get("/api/auth/status", (req, res) => {
       });
     } catch (err: any) {
       console.error("Failed to update user file:", err);
+      if (err.message === "UNAUTHORIZED_SESSION_INACTIVE") {
+        return res.status(401).json({ error: "Unauthorized: Session has been terminated or expired" });
+      }
       res.status(500).json({ error: `Update failed: ${err.message}` });
     }
   });
@@ -710,6 +862,12 @@ app.get("/api/auth/status", (req, res) => {
 
         // Fetch user JSON file
         const userFile = await telegramDb.fetchUserFile(token, chatId, decoded.userId, true);
+
+        // Verify active session
+        const currentSession = userFile.sessions?.find(s => s.sessionId === decoded.sessionId);
+        if (!currentSession || currentSession.status !== "Active") {
+          throw new Error("UNAUTHORIZED_SESSION_INACTIVE");
+        }
 
         if (trimmedFullName && userFile.fullName !== trimmedFullName) {
           addUpdateLog(userFile, {
@@ -771,6 +929,9 @@ app.get("/api/auth/status", (req, res) => {
       });
     } catch (err: any) {
       console.error("Profile update error:", err);
+      if (err.message === "UNAUTHORIZED_SESSION_INACTIVE") {
+        return res.status(401).json({ error: "Unauthorized: Session has been terminated or expired" });
+      }
       if (err.message && err.message.includes("CONFLICT")) {
         return res.status(409).json({ error: "Username is already taken" });
       }

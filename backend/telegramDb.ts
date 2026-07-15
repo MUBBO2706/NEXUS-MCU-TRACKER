@@ -1148,6 +1148,23 @@ export async function fetchUserFile(
     preferences: progressDoc.preferences || {},
   };
 
+  // Auto-expire sessions older than 7 days
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+  const nowMs = Date.now();
+  if (userJson.sessions) {
+    userJson.sessions = userJson.sessions.map((s: any) => {
+      if (s.status === "Active" && s.startedAt + sevenDaysMs < nowMs) {
+        return {
+          ...s,
+          status: "Expired",
+          endedAt: s.startedAt + sevenDaysMs,
+          durationSeconds: Math.round(sevenDaysMs / 1000)
+        };
+      }
+      return s;
+    });
+  }
+
   // Cache a deep copy of the loaded user JSON
   userFileCache.set(userId, {
     userJson: JSON.parse(JSON.stringify(userJson)),
