@@ -541,7 +541,7 @@ export const MCU_TITLES: McuTitle[] = [
     runtimeMinutes: 133,
     timelineOrder: 16,
     backdropUrl: 'linear-gradient(135deg, #141c29 0%, #a11313 100%)',
-    posterUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f9/Spider-Man_Homecoming_poster.jpg/250px-Spider-Man_Homecoming_poster.jpg',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/c24sv2weTHPsmDa7jEMN0m2P3RT.jpg',
     genres: ['Action', 'Sci-Fi', 'Comedy', 'Adventure'],
     director: 'Jon Watts',
     mainCharacters: ['spiderman', 'ironman'],
@@ -786,7 +786,7 @@ export const MCU_TITLES: McuTitle[] = [
     runtimeMinutes: 129,
     timelineOrder: 22,
     backdropUrl: 'linear-gradient(135deg, #141c2b 0%, #870f0f 100%)',
-    posterUrl: 'https://upload.wikimedia.org/wikipedia/en/b/bd/Spider-Man_Far_From_Home_poster.jpg',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/4q2NNj4S5dG2RLF9CpXsej7yXl.jpg',
     genres: ['Action', 'Sci-Fi', 'Comedy', 'Adventure'],
     director: 'Jon Watts',
     mainCharacters: ['spiderman', 'fury'],
@@ -1036,7 +1036,7 @@ export const MCU_TITLES: McuTitle[] = [
     runtimeMinutes: 148,
     timelineOrder: 28,
     backdropUrl: 'linear-gradient(135deg, #0e1c2b 0%, #6e0e1a 100%)',
-    posterUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/00/Spider-Man_No_Way_Home_poster.jpg/250px-Spider-Man_No_Way_Home_poster.jpg',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg',
     genres: ['Action', 'Sci-Fi', 'Fantasy', 'Adventure'],
     director: 'Jon Watts',
     mainCharacters: ['spiderman', 'doctor_strange', 'wong'],
@@ -1744,7 +1744,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Iron Man (Tony Stark)',
     role: 'hero',
     actor: 'Robert Downey Jr.',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/e8/Robert_Downey_Jr_2014_Comic_Con_%28cropped%29.jpg',
+    avatarUrl: 'https://telegram.local/character/ironman.jpg',
     status: 'Deceased',
     journeySummary: 'Tony Stark goes from a selfish weapons manufacturer to a selfless leader who ultimately sacrifices his life to save the entire universe from Thanos. He is the founding father of the Avengers.',
     relationships: [
@@ -1760,7 +1760,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Captain America (Steve Rogers)',
     role: 'hero',
     actor: 'Chris Evans',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/en/9/9b/Steve_Rogers_MCU_character_poster.jpg',
+    avatarUrl: 'https://telegram.local/character/captainamerica.jpg',
     status: 'Retired',
     journeySummary: 'A patriotic WWII volunteer who receives a super-soldier serum and is frozen for 70 years. He leads the Avengers, fights corrupt institutions, and finally gets his dance with Peggy after restoring the universe.',
     relationships: [
@@ -1776,7 +1776,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Thor Odinson',
     role: 'hero',
     actor: 'Chris Hemsworth',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1a/Chris_Hemsworth_2019_by_Gage_Skidmore.jpg',
+    avatarUrl: 'https://telegram.local/character/thor.jpg',
     status: 'Active',
     journeySummary: 'The God of Thunder who learns humility on Earth, loses his father, mother, brother, and entire planet, falls into depression, but redeems himself to become a cosmic protector raising Love (Gorr\'s daughter).',
     relationships: [
@@ -1792,7 +1792,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Loki Laufeyson',
     role: 'antihero',
     actor: 'Tom Hiddleston',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/6d/Tom_Hiddleston_by_Gage_Skidmore_2.jpg',
+    avatarUrl: 'https://telegram.local/character/loki.jpg',
     status: 'Active',
     journeySummary: 'Starts as a jealous prince, attacks Earth as a villain, reconciles with Thor, dies at the hands of Thanos, but his variant joins the TVA and ultimately sacrifices his freedom to hold the Multiverse branches together.',
     relationships: [
@@ -1808,7 +1808,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Scarlet Witch (Wanda Maximoff)',
     role: 'antihero',
     actor: 'Elizabeth Olsen',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/en/1/1a/Wanda_Maximoff_MCU_character_poster.jpg',
+    avatarUrl: 'https://telegram.local/character/wanda.jpg',
     status: 'Unknown',
     journeySummary: 'A Sokovian orphan experimented on with the Mind Stone. She loses her brother Pietro and lover Vision, accidentally enslaves a town (Westview) to create a fake family, and corrupts herself reading the Darkhold before destroying it.',
     relationships: [
@@ -1824,7 +1824,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Spider-Man (Peter Parker)',
     role: 'hero',
     actor: 'Tom Holland',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/en/a/a2/Spider-Man_MCU.jpg',
+    avatarUrl: 'https://telegram.local/character/spiderman.jpg',
     status: 'Active',
     journeySummary: 'A Queens teenager recruited by Tony Stark. He battles advanced villains, joins the Avengers in space, deals with Tony\'s death, accidentally tears open the multiverse, and has the world forget him to seal the rift.',
     relationships: [
@@ -1840,7 +1840,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Black Widow (Natasha Romanoff)',
     role: 'hero',
     actor: 'Scarlett Johansson',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/en/f/f6/Scarlet_Johansson_as_Black_Widow.jpg',
+    avatarUrl: 'https://telegram.local/character/blackwidow.jpg',
     status: 'Deceased',
     journeySummary: 'A former KGB assassin who redemptively joins S.H.I.E.L.D. and the Avengers. She goes from a closed-off operative to a sister-figure who holds the broken team together after Thanos\' snap and ultimately sacrifices her life on Vormir for the Soul Stone to save trillions.',
     relationships: [
@@ -1856,7 +1856,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Hulk (Bruce Banner)',
     role: 'hero',
     actor: 'Mark Ruffalo',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/en/a/a4/Bruce_Banner_MCU.jpg',
+    avatarUrl: 'https://telegram.local/character/hulk.jpg',
     status: 'Active',
     journeySummary: 'A brilliant nuclear physicist who, after gamma radiation exposure, gains a destructive alter ego. He spends years struggling to control the beast, exile himself in space, and finally achieves peace by merging his intelligence with Hulk\'s physical strength as Smart Hulk.',
     relationships: [
@@ -1872,7 +1872,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Hawkeye (Clint Barton)',
     role: 'hero',
     actor: 'Jeremy Renner',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/en/9/99/Clint_Barton_MCU_character_poster.jpg',
+    avatarUrl: 'https://telegram.local/character/hawkeye.jpg',
     status: 'Retired',
     journeySummary: 'A master marksman S.H.I.E.L.D. agent who becomes a core Avenger. After losing his entire family to Thanos\' snap, he goes on a dark rampage as the vigilante Ronin. Following the blip and Natasha\'s death, he defeats Kingpin\'s syndicate and trains Kate Bishop as his successor.',
     relationships: [
@@ -1888,7 +1888,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Star-Lord (Peter Quill)',
     role: 'hero',
     actor: 'Chris Pratt',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/en/c/c2/Star-Lord_MCU.jpg',
+    avatarUrl: 'https://telegram.local/character/starlord.jpg',
     status: 'Active',
     journeySummary: 'Abducted from Earth in 1988, Peter grows up as a space scavenger. He forms the Guardians of the Galaxy, learns of his cosmic heritage, defeats his celestial father Ego, and survives immense grief after Gamora\'s death before returning to Earth to reconnect with his grandfather.',
     relationships: [
@@ -1904,7 +1904,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Doctor Strange (Stephen Strange)',
     role: 'hero',
     actor: 'Benedict Cumberbatch',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/en/a/a1/Doctor_Strange_in_the_Multiverse_of_Madness_poster.jpg',
+    avatarUrl: 'https://telegram.local/character/doctorstrange.jpg',
     status: 'Active',
     journeySummary: 'An arrogant neurosurgeon who loses his hand functionality in a car crash. Seeking healing, he learns Mystic Arts at Kamar-Taj, eventually becoming the Sorcerer Supreme and using the Time Stone to orchestrate Thanos\' defeat and defend the boundaries of the Multiverse.',
     relationships: [
@@ -1920,7 +1920,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Black Panther (T\'Challa)',
     role: 'hero',
     actor: 'Chadwick Boseman',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/en/9/9f/Black_Panther_OS_Poster.jpg',
+    avatarUrl: 'https://telegram.local/character/blackpanther.jpg',
     status: 'Deceased',
     journeySummary: 'The crown prince of Wakanda who inherits the throne and the Black Panther mantle after his father\'s assassination. He defends his country against usurpation, opens Wakanda\'s borders to the world, and leads the defense of Earth during Thanos\' invasion.',
     relationships: [
@@ -1936,7 +1936,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Captain Marvel (Carol Danvers)',
     role: 'hero',
     actor: 'Brie Larson',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/en/8/85/Captain_Marvel_poster.jpg',
+    avatarUrl: 'https://telegram.local/character/captainmarvel.jpg',
     status: 'Active',
     journeySummary: 'An Air Force pilot exposed to Tesseract energy, giving her immense cosmic powers. After being brainwashed by the Kree, she recovers her memory, unleashes her full binary potential, protects refugees across galaxies, and aids the Avengers in turning the tide against Thanos.',
     relationships: [
@@ -1952,7 +1952,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Ant-Man (Scott Lang)',
     role: 'hero',
     actor: 'Paul Rudd',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/en/3/33/Ant-Man_poster.jpg',
+    avatarUrl: 'https://telegram.local/character/antman.jpg',
     status: 'Active',
     journeySummary: 'A well-meaning former burglar who becomes Ant-Man using Hank Pym\'s shrinking suit. After getting trapped in the Quantum Realm for five years, he returns to suggest time-travel heist mechanics, playing a pivotal role in restoring the universe.',
     relationships: [
@@ -1968,7 +1968,7 @@ export const MCU_CHARACTERS: CharacterArc[] = [
     name: 'Thanos (The Mad Titan)',
     role: 'villain',
     actor: 'Josh Brolin',
-    avatarUrl: 'https://upload.wikimedia.org/wikipedia/en/c/c4/Thanos_Infinity_War.0.jpg',
+    avatarUrl: 'https://telegram.local/character/thanos.jpg',
     status: 'Deceased',
     journeySummary: 'A ruthless warlord from Titan who seeks the six Infinity Stones to erase half of all life, believing it is the only way to save the universe from resource collapse. He succeeds in his mission but is ultimately defeated when the Avengers undo his work.',
     relationships: [

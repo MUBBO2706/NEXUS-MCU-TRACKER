@@ -125,7 +125,7 @@ async function updateTelegramFile(
   messageId: number,
   filename: string,
   content: string
-): Promise<{ messageId: number; fileId: string }> {
+): Promise<{ messageId: number; fileId: string | null }> {
   const formData = new FormData();
   formData.append("chat_id", chatId);
   formData.append("message_id", String(messageId));
@@ -144,12 +144,15 @@ async function updateTelegramFile(
     body: formData,
   });
 
+  const responseText = await response.text();
   if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Failed to update index file on Telegram: ${response.status} - ${errText}`);
+    if (responseText.includes("message is not modified")) {
+      return { messageId, fileId: null };
+    }
+    throw new Error(`Failed to update index file on Telegram: ${response.status} - ${responseText}`);
   }
 
-  const data = await response.json();
+  const data = JSON.parse(responseText);
   if (!data.ok || !data.result?.document?.file_id) {
     throw new Error("Telegram editMessageMedia succeeded but document file ID was missing from response");
   }
@@ -299,6 +302,8 @@ export async function scanChannelAndRebuildIndex(): Promise<CharacterImageIndex>
   const expectedCount = CHARACTER_FILENAMES.length;
   let foundCount = 0;
   const minId = Math.max(1, maxId - 500);
+  
+  const oldIndexMessageIds: number[] = [];
 
   console.log(`[Telegram Character Repo] Scanning messages in reverse from message ID ${maxId} down to ${minId}...`);
 
@@ -308,6 +313,8 @@ export async function scanChannelAndRebuildIndex(): Promise<CharacterImageIndex>
     // Check if we have already found all expected characters
     if (foundCount >= expectedCount) {
       console.log(`[Telegram Character Repo] Found all ${expectedCount} characters! Stopping scan early.`);
+      // We don't break immediately here if we want to find all old indexes to clean up, but performance is better if we do break.
+      // However, we need to clean up duplicates. Let's just break for performance. The old indexes might be left behind if they are very old.
       break;
     }
 
@@ -331,6 +338,10 @@ export async function scanChannelAndRebuildIndex(): Promise<CharacterImageIndex>
           fileId = msg.document.file_id;
           fileUniqueId = msg.document.file_unique_id || "";
           rawFilename = msg.document.file_name || msg.caption || "";
+          
+          if (msg.document.file_name === "character_images_index.json") {
+             oldIndexMessageIds.push(msgId);
+          }
         }
         // Check if message has a photo
         else if (msg.photo && Array.isArray(msg.photo) && msg.photo.length > 0) {
@@ -369,20 +380,83 @@ export async function scanChannelAndRebuildIndex(): Promise<CharacterImageIndex>
   let finalMessageId = inMemoryIndexPinnedMessageId;
   let uploadSuccess = false;
 
-  if (finalMessageId) {
+  if (!finalMessageId) {
     try {
-      console.log(`[Telegram Character Repo] Attempting to update existing pinned index message ${finalMessageId}...`);
-      const editResult = await updateTelegramFile(token, channelId, finalMessageId, indexFilename, indexJsonStr);
+      const chatInfo = await telegramRequest(token, `getChat?chat_id=${channelId}`);
+      const pinnedMessage = chatInfo.result?.pinned_message;
+      if (pinnedMessage && pinnedMessage.document && pinnedMessage.document.file_name === "character_images_index.json") {
+        finalMessageId = pinnedMessage.message_id;
+      }
+    } catch (err) {
+      console.warn(`[Telegram Character Repo] Failed to get chat info for pinned message check:`, err);
+    }
+  }
+  
+  // Clean up duplicate old indexes to ensure only ONE exists
+  let targetIndexMsgId = finalMessageId;
+  if (!targetIndexMsgId && oldIndexMessageIds.length > 0) {
+    // Sort descending to keep the newest one
+    oldIndexMessageIds.sort((a, b) => b - a);
+    targetIndexMsgId = oldIndexMessageIds[0];
+  }
+  
+  for (const oldId of oldIndexMessageIds) {
+    if (oldId !== targetIndexMsgId) {
+      try {
+        console.log(`[Telegram Character Repo] Deleting duplicate old index message ${oldId}...`);
+        await telegramRequest(token, "deleteMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: channelId, message_id: oldId })
+        });
+      } catch (e) {}
+    }
+  }
+
+  if (targetIndexMsgId) {
+    try {
+      console.log(`[Telegram Character Repo] Attempting to update existing pinned index message ${targetIndexMsgId}...`);
+      const editResult = await updateTelegramFile(token, channelId, targetIndexMsgId, indexFilename, indexJsonStr);
       finalMessageId = editResult.messageId;
       uploadSuccess = true;
+      
+      // Ensure it is pinned
+      await telegramRequest(token, "pinChatMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: channelId,
+          message_id: finalMessageId,
+          disable_notification: true,
+        }),
+      });
     } catch (editErr) {
-      console.warn(`[Telegram Character Repo] Failed to edit pinned index message, uploading a new one...`);
+      console.warn(`[Telegram Character Repo] Failed to edit pinned index message, attempting to delete it and unpin all...`, editErr);
+      try {
+        await telegramRequest(token, "deleteMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: channelId, message_id: targetIndexMsgId })
+        });
+        await telegramRequest(token, "unpinAllChatMessages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: channelId })
+        });
+      } catch (unpinErr) {}
       finalMessageId = null;
     }
   }
 
   if (!uploadSuccess) {
     try {
+      // Ensure clean slate before new pin
+      await telegramRequest(token, "unpinAllChatMessages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: channelId })
+      });
+      
       const uploadResult = await uploadTelegramFile(token, channelId, indexFilename, indexJsonStr);
       finalMessageId = uploadResult.messageId;
       
@@ -410,6 +484,8 @@ export async function scanChannelAndRebuildIndex(): Promise<CharacterImageIndex>
   return newIndex;
 }
 
+let indexFetchPromise: Promise<CharacterImageIndex> | null = null;
+
 // Fetch character image index from persistent Telegram JSON document
 export async function getCharacterImageIndex(forceFresh = false): Promise<CharacterImageIndex> {
   // Layer 1: In-Memory cache lookup
@@ -417,34 +493,46 @@ export async function getCharacterImageIndex(forceFresh = false): Promise<Charac
     return inMemoryIndexCache;
   }
 
-  const { token, channelId } = getCharacterConfig();
-
-  // Layer 2: Persistent Telegram JSON index lookup via getChat Pinned Message
-  try {
-    console.log(`[Telegram Character Repo] Retrieving chat info to find pinned index...`);
-    const chatInfo = await telegramRequest(token, `getChat?chat_id=${channelId}`);
-    const pinnedMessage = chatInfo.result?.pinned_message;
-
-    if (pinnedMessage && pinnedMessage.document && pinnedMessage.document.file_name === "character_images_index.json") {
-      const fileId = pinnedMessage.document.file_id;
-      const filePath = await getTelegramFilePath(token, fileId);
-      const content = (await downloadTelegramFileBinary(token, filePath)).toString("utf-8");
-      
-      const parsedIndex = JSON.parse(content) as CharacterImageIndex;
-      inMemoryIndexCache = parsedIndex;
-      inMemoryIndexPinnedMessageId = pinnedMessage.message_id;
-      indexCacheTimestamp = Date.now();
-      
-      console.log(`[Telegram Character Repo] Successfully loaded persistent index from Telegram pinned message.`);
-      return parsedIndex;
-    }
-  } catch (err) {
-    console.warn(`[Telegram Character Repo] Persistent Telegram JSON index fetch failed:`, err);
+  if (indexFetchPromise) {
+    return indexFetchPromise;
   }
 
-  // If no pinned message, or fetching failed, scan the channel to rebuild it
-  console.log(`[Telegram Character Repo] Pinned index not found or unreachable. Rebuilding index via scan...`);
-  return await scanChannelAndRebuildIndex();
+  indexFetchPromise = (async () => {
+    try {
+      const { token, channelId } = getCharacterConfig();
+
+      // Layer 2: Persistent Telegram JSON index lookup via getChat Pinned Message
+      try {
+        console.log(`[Telegram Character Repo] Retrieving chat info to find pinned index...`);
+        const chatInfo = await telegramRequest(token, `getChat?chat_id=${channelId}`);
+        const pinnedMessage = chatInfo.result?.pinned_message;
+
+        if (pinnedMessage && pinnedMessage.document && pinnedMessage.document.file_name === "character_images_index.json") {
+          const fileId = pinnedMessage.document.file_id;
+          const filePath = await getTelegramFilePath(token, fileId);
+          const content = (await downloadTelegramFileBinary(token, filePath)).toString("utf-8");
+          
+          const parsedIndex = JSON.parse(content) as CharacterImageIndex;
+          inMemoryIndexCache = parsedIndex;
+          inMemoryIndexPinnedMessageId = pinnedMessage.message_id;
+          indexCacheTimestamp = Date.now();
+          
+          console.log(`[Telegram Character Repo] Successfully loaded persistent index from Telegram pinned message.`);
+          return parsedIndex;
+        }
+      } catch (err) {
+        console.warn(`[Telegram Character Repo] Persistent Telegram JSON index fetch failed:`, err);
+      }
+
+      // If no pinned message, or fetching failed, scan the channel to rebuild it
+      console.log(`[Telegram Character Repo] Pinned index not found or unreachable. Rebuilding index via scan...`);
+      return await scanChannelAndRebuildIndex();
+    } finally {
+      indexFetchPromise = null;
+    }
+  })();
+
+  return indexFetchPromise;
 }
 
 // Retrieve character image bytes from the Telegram repository with automatic self-healing
