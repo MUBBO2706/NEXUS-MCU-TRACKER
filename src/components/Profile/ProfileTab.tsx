@@ -70,6 +70,7 @@ interface ProfileTabProps {
   onTerminateOtherSessions?: () => Promise<void>;
   onDeleteSession?: (sessionId: string) => Promise<void>;
   onDeleteInactiveSessions?: () => Promise<void>;
+  onRefreshProfile?: () => Promise<void>;
 }
 
 export function ProfileTab({
@@ -129,6 +130,7 @@ export function ProfileTab({
   onTerminateOtherSessions,
   onDeleteSession,
   onDeleteInactiveSessions,
+  onRefreshProfile,
 }: ProfileTabProps) {
   const [isDurationHHMMSS, setIsDurationHHMMSS] = React.useState(false);
 
@@ -161,6 +163,8 @@ export function ProfileTab({
           activeTheme={activeTheme}
           isOfflineSandbox={isOfflineSandbox}
           formatToIndianDateTime={formatToIndianDateTime}
+          authToken={authToken}
+          onRefreshProfile={onRefreshProfile}
         />
       ) : showAllSessions ? (
         <SessionRegistryCodex

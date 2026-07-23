@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Database, Search, ArrowLeft, Eye } from 'lucide-react';
+import { Database, Search, ArrowLeft, Eye, Cpu } from 'lucide-react';
 import { CustomDropdown } from '../CustomDropdown';
 import { CustomDatePicker } from '../Common/CustomDatePicker';
 
@@ -58,6 +58,8 @@ interface ShieldUpdatesLedgerProps {
   activeTheme: 'oled' | 'cosmic' | 'asgardian' | 'wakanda' | 'stark' | 'hydra';
   isOfflineSandbox: boolean;
   formatToIndianDateTime: (timestamp: number | string) => string;
+  authToken?: string | null;
+  onRefreshProfile?: () => Promise<void>;
 }
 
 export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
@@ -67,6 +69,8 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
   activeTheme,
   isOfflineSandbox,
   formatToIndianDateTime,
+  authToken,
+  onRefreshProfile,
 }) => {
   // Local States
   const [searchQuery, setSearchQuery] = useState('');
@@ -76,6 +80,40 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
+
+  // Archive Local States & In-Memory Cache
+  const [archivedLogs, setArchivedLogs] = useState<any[]>([]);
+  const [isLoadingArchive, setIsLoadingArchive] = useState(false);
+  const [hasLoadedArchive, setHasLoadedArchive] = useState(false);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
+
+  const handleLoadArchive = async () => {
+    if (!authToken || isOfflineSandbox || isLoadingArchive || hasLoadedArchive) return;
+    setIsLoadingArchive(true);
+    setArchiveError(null);
+    try {
+      const res = await fetch('/api/user/logs/archive', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+      if (!res.ok) {
+        throw new Error(`Server returned status ${res.status}`);
+      }
+      const data = await res.json();
+      if (data.success) {
+        setArchivedLogs(data.updates || []);
+        setHasLoadedArchive(true);
+      } else {
+        throw new Error(data.error || 'Failed to fetch archive');
+      }
+    } catch (err: any) {
+      console.error('Failed to load archive logs:', err);
+      setArchiveError(err.message || 'Error loading archive');
+    } finally {
+      setIsLoadingArchive(false);
+    }
+  };
 
   // Theme helper for Custom Dropdown styles consistency
   const getThemeStyles = () => {
@@ -146,8 +184,26 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
   // Raw logs list
   const logs = isOfflineSandbox ? sandboxUpdates : (user?.updates || []);
 
+  // Combine raw updates and loaded archives with deduplication by ID
+  const allLogs = React.useMemo(() => {
+    const combined = [...logs, ...archivedLogs];
+    const seen = new Set();
+    return combined.filter(item => {
+      if (!item.id) return true;
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  }, [logs, archivedLogs]);
+
+  // Total log count from user profile configuration file or calculated
+  const totalLogsCount = user?.totalLogCount || Math.max(allLogs.length, (user?.updates?.length || 0) + (user?.updatesBuffer?.length || 0));
+
+  // Determine if unretrieved archived logs exist in Telegram Storage
+  const hasMoreArchivesToLoad = !isOfflineSandbox && !hasLoadedArchive && (allLogs.length < totalLogsCount || !!user?.archiveFileId);
+
   // Filter logic
-  const filtered = logs.filter((log: any) => {
+  const filtered = allLogs.filter((log: any) => {
     // 1. Search Query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -310,13 +366,37 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
       {/* Audit trail table */}
       <div className="flex flex-col gap-3 text-left pt-3 pb-4">
         {/* Row Header with Single-Line Labels prevented from wrapping */}
-        <div className="flex items-center justify-between gap-2 border-b border-neutral-850 pb-2.5">
-          <span className="text-xs sm:text-sm uppercase font-bold text-neutral-200 tracking-wider font-display whitespace-nowrap">
-            Update Logs
-          </span>
-          <span className="font-mono text-[9px] text-neutral-500 uppercase tracking-widest whitespace-nowrap">
-            {sorted.length} matches logged
-          </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-850 pb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs sm:text-sm uppercase font-bold text-neutral-200 tracking-wider font-display whitespace-nowrap">
+              Update Logs
+            </span>
+            <span className="font-mono text-[9px] text-neutral-500 uppercase tracking-widest whitespace-nowrap">
+              ({sorted.length} {sorted.length === 1 ? 'log' : 'logs'} displayed{totalLogsCount > sorted.length ? ` / ${totalLogsCount} total` : ''})
+            </span>
+          </div>
+
+          {/* Status Indicator */}
+          {!isOfflineSandbox && authToken && (
+            <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-wider">
+              {isLoadingArchive ? (
+                <div className="flex items-center gap-1.5 text-amber-400">
+                  <div className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                  Accessing Telegram Storage...
+                </div>
+              ) : hasLoadedArchive ? (
+                <div className="flex items-center gap-1.5 text-emerald-400 animate-fadeIn">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Archive Connected ({archivedLogs.length} logs)
+                </div>
+              ) : null}
+              {archiveError && (
+                <span className="text-red-400 font-semibold max-w-[200px] truncate" title={archiveError}>
+                  [Failed: {archiveError}]
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {pageLogs.length > 0 ? (
@@ -372,7 +452,7 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
               </table>
             </div>
 
-            {maxPage > 1 && (
+            {(maxPage > 1 || hasMoreArchivesToLoad) && (
               <div className="flex items-center justify-between pt-2 font-sans text-xs">
                 <button
                   type="button"
@@ -382,17 +462,38 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
                 >
                   Previous
                 </button>
-                <span className="text-neutral-500 font-mono text-[10px]">
-                  Page {currentPage} of {maxPage}
-                </span>
-                <button
-                  type="button"
-                  disabled={currentPage === maxPage}
-                  onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                  className="px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white disabled:opacity-40 disabled:hover:text-neutral-300 transition-colors cursor-pointer"
-                >
-                  Next
-                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-neutral-500 font-mono text-[10px]">
+                    Page {currentPage} of {maxPage}
+                  </span>
+                  {isLoadingArchive && (
+                    <span className="text-[10px] text-amber-400 font-mono animate-pulse flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                      Fetching Archive...
+                    </span>
+                  )}
+                </div>
+                {currentPage === maxPage && hasMoreArchivesToLoad ? (
+                  <button
+                    type="button"
+                    disabled={isLoadingArchive}
+                    onClick={handleLoadArchive}
+                    className="px-3 py-1.5 rounded-lg bg-amber-950/50 border border-amber-800/80 text-amber-300 hover:bg-amber-900/60 hover:border-amber-600 font-medium transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                    title="Load next 500 archived logs from Telegram Storage"
+                  >
+                    <Database className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                    {isLoadingArchive ? 'Loading Archive...' : 'Load 500 More'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={currentPage === maxPage}
+                    onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
+                    className="px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white disabled:opacity-40 disabled:hover:text-neutral-300 transition-colors cursor-pointer"
+                  >
+                    Next
+                  </button>
+                )}
               </div>
             )}
           </div>

@@ -45,7 +45,22 @@ function addUpdateLog(userJson: any, log: {
     timestamp: Date.now(),
     ...log
   };
-  userJson.updates = [newLog, ...userJson.updates].slice(0, 500);
+  userJson.updates = [newLog, ...userJson.updates];
+  
+  if (userJson.updates.length > 500) {
+    const overflow = userJson.updates.slice(500);
+    userJson.updates = userJson.updates.slice(0, 500);
+    if (!userJson.updatesBuffer) {
+      userJson.updatesBuffer = [];
+    }
+    userJson.updatesBuffer.push(...overflow);
+  }
+
+  if (typeof userJson.totalLogCount !== "number") {
+    userJson.totalLogCount = (userJson.updates?.length || 0) + (userJson.updatesBuffer?.length || 0);
+  } else {
+    userJson.totalLogCount += 1;
+  }
 }
 
 const app = express();
@@ -1091,6 +1106,32 @@ app.get("/api/auth/status", (req, res) => {
     }
   });
 
+  // Fetch user's archived update logs (transparently downloaded from Telegram)
+  app.get("/api/user/logs/archive", async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Unauthorized: Missing token" });
+    }
+
+    const sessionToken = authHeader.split(" ")[1];
+
+    try {
+      const { token, chatId, secret } = telegramDb.getTelegramConfig();
+
+      const decoded = telegramDb.verifyToken(sessionToken, secret);
+      if (!decoded || !decoded.userId) {
+        return res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
+      }
+
+      // Fetch archived logs
+      const updates = await telegramDb.fetchUserArchive(token, chatId, decoded.userId);
+      res.json({ success: true, updates });
+    } catch (err: any) {
+      console.error("Failed to fetch logs archive:", err);
+      res.status(500).json({ error: `Failed to fetch logs archive: ${err.message}` });
+    }
+  });
+
   // Reset Password
   app.post("/api/user/reset-password", async (req, res) => {
     const authHeader = req.headers.authorization;
@@ -1461,8 +1502,17 @@ Last Updated: ${lastUpdatedIst}
     const url = req.query.url as string;
     const characterId = req.query.characterId as string;
 
-    // Try to resolve character portraits directly from the Telegram Character Repository
-    const charFilename = telegramCharacterImages.getCharacterFilename(characterId, url);
+    // Try to resolve character portraits directly from the Telegram Character Repository if characterId or telegram.local URL is provided
+    let charFilename: string | null = characterId ? telegramCharacterImages.getCharacterFilename(characterId) : null;
+    
+    if (!charFilename && url && url.includes("telegram.local")) {
+      const parts = url.split("/");
+      const possibleFilename = parts[parts.length - 1];
+      if (possibleFilename && possibleFilename.endsWith(".jpg")) {
+        charFilename = possibleFilename;
+      }
+    }
+
     if (charFilename) {
       try {
         const imageResult = await telegramCharacterImages.getCharacterImage(charFilename);
@@ -1472,8 +1522,25 @@ Last Updated: ${lastUpdatedIst}
           return res.send(imageResult.bytes);
         }
       } catch (err: any) {
-        console.warn(`[Telegram Character Repo] Failed to serve character portrait for ${charFilename} from Telegram (falling back to external):`, err.message);
+        console.warn(`[Telegram Character Repo] Failed to serve character portrait for ${charFilename} from Telegram:`, err.message);
       }
+    }
+
+    // If url is a synthetic telegram.local URL and image wasn't found, do not attempt external fetches
+    if (url && url.includes("telegram.local")) {
+      res.setHeader("Content-Type", "image/svg+xml");
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      return res.send(`
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="100%" height="100%">
+          <rect width="100%" height="100%" fill="#121217"/>
+          <g transform="translate(200, 270)">
+            <circle r="45" fill="#22222a"/>
+            <circle r="20" fill="#3a3a48"/>
+            <path d="M-40,60 C-40,35 40,35 40,60 Z" fill="#3a3a48"/>
+          </g>
+          <text x="50%" y="370" dominant-baseline="middle" text-anchor="middle" fill="#666675" font-family="sans-serif" font-size="12" font-weight="600" letter-spacing="1">CHARACTER PORTRAIT</text>
+        </svg>
+      `);
     }
 
     if (!url) {

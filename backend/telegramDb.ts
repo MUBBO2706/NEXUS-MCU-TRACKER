@@ -67,6 +67,9 @@ export interface UserJson {
   avatarMessageId?: number;
   avatarUrl?: string;
   updates?: UpdateLog[];
+  updatesBuffer?: UpdateLog[];
+  totalLogCount?: number;
+  archiveFileId?: string;
 }
 
 export interface UserIndexEntry {
@@ -88,6 +91,10 @@ export interface UserIndexEntry {
   avatarFileId?: string;
   avatarMessageId?: number;
   avatarLastUpdated?: number;
+  archiveMessageId?: number;  // Archive Document Message ID
+  archiveFileId?: string;     // Archive Document File ID
+  archiveLastUpdated?: number;
+  totalLogCount?: number;
 }
 
 export interface UserIndex {
@@ -1089,6 +1096,7 @@ export async function migrateUserToBinarySplit(
     unlockedAchievements: legacyUserJson.unlockedAchievements || [],
     preferences: legacyUserJson.preferences || {},
     updates: legacyUserJson.updates || [],
+    updatesBuffer: legacyUserJson.updatesBuffer || [],
   };
 
   const authBuf = Buffer.from(encode(authDoc));
@@ -1245,11 +1253,25 @@ export async function fetchUserFile(
     
     // In 2-file architecture timeline updates reside in progressDoc. In 3-file it was sessionsDoc.updates
     updates: progressDoc.updates || (sessionsDoc ? sessionsDoc.updates : []) || [],
+    updatesBuffer: progressDoc.updatesBuffer || [],
     
     watchData: progressDoc.watchData || {},
     unlockedAchievements: progressDoc.unlockedAchievements || [],
     preferences: progressDoc.preferences || {},
+    archiveFileId: userEntry.archiveFileId,
   };
+
+  // Compute or synchronize totalLogCount
+  const currentLogsCount = (userJson.updates?.length || 0) + (userJson.updatesBuffer?.length || 0);
+  if (typeof progressDoc.totalLogCount === "number") {
+    userJson.totalLogCount = progressDoc.totalLogCount;
+  } else if (typeof userEntry.totalLogCount === "number") {
+    userJson.totalLogCount = userEntry.totalLogCount;
+  } else if (userEntry.archiveFileId) {
+    userJson.totalLogCount = Math.max(currentLogsCount, 500);
+  } else {
+    userJson.totalLogCount = currentLogsCount;
+  }
 
   // Auto-expire sessions older than 7 days
   const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
@@ -1343,6 +1365,8 @@ export async function registerUser(
     unlockedAchievements: userJson.unlockedAchievements || [],
     preferences: userJson.preferences || {},
     updates: userJson.updates || [],
+    updatesBuffer: userJson.updatesBuffer || [],
+    totalLogCount: userJson.totalLogCount || (userJson.updates?.length || 0) + (userJson.updatesBuffer?.length || 0),
   };
 
   const authBuf = Buffer.from(encode(authDoc));
@@ -1447,6 +1471,93 @@ export async function updateUserFileAndIndex(
 
   const safeName = sanitizeNameForFilename(updatedUserJson.fullName);
 
+  // 0. Updates Buffer Archival and Flushing Algorithm
+  let archiveUpdated = false;
+  if (updatedUserJson.updatesBuffer && updatedUserJson.updatesBuffer.length >= 500) {
+    console.log(`[Archiving] User ${userId} has accumulated ${updatedUserJson.updatesBuffer.length} buffer entries. Archiving old logs...`);
+    try {
+      let archivedUpdates: UpdateLog[] = [];
+      
+      // 1. Download existing archive if any
+      if (userEntry.archiveFileId) {
+        try {
+          const archivePath = await getTelegramFilePath(token, userEntry.archiveFileId);
+          const archiveBuf = await downloadTelegramFileBinary(token, archivePath);
+          const archiveDoc = decode(archiveBuf) as { userId: string; updates: UpdateLog[] };
+          if (archiveDoc && Array.isArray(archiveDoc.updates)) {
+            archivedUpdates = archiveDoc.updates;
+          }
+        } catch (downloadErr) {
+          console.warn(`[Archiving] Failed to download existing archive for ${userId}, starting fresh archive:`, downloadErr);
+        }
+      }
+      
+      // 2. Prepend the new buffer updates (reverse-chronological newest first)
+      archivedUpdates = [...updatedUserJson.updatesBuffer, ...archivedUpdates];
+      
+      // 3. Keep at most 10,000 entries (user limit)
+      if (archivedUpdates.length > 10000) {
+        archivedUpdates = archivedUpdates.slice(0, 10000);
+      }
+      
+      // 4. Encode and upload/update archive document
+      const archiveDocPayload = {
+        userId,
+        updates: archivedUpdates
+      };
+      const archiveBuf = Buffer.from(encode(archiveDocPayload));
+      const archiveFileName = `user_${safeName}_archive.msgpack`;
+      
+      let archiveMessageId = userEntry.archiveMessageId;
+      let archiveFileId = userEntry.archiveFileId;
+      
+      if (archiveMessageId) {
+        try {
+          const updated = await updateTelegramBinaryFile(
+            token,
+            chatId,
+            archiveMessageId,
+            archiveFileName,
+            archiveBuf,
+            "application/x-msgpack",
+            `📦 Linked MCU Updates Archive for ${updatedUserJson.fullName}`
+          );
+          archiveMessageId = updated.messageId;
+          archiveFileId = updated.fileId;
+        } catch (updateErr) {
+          console.warn(`[Archiving] Failed to update existing archive message ${archiveMessageId}, doing fresh upload:`, updateErr);
+          archiveMessageId = undefined;
+        }
+      }
+      
+      if (!archiveMessageId) {
+        const uploaded = await uploadTelegramBinaryFile(
+          token,
+          chatId,
+          archiveFileName,
+          archiveBuf,
+          "application/x-msgpack",
+          `📦 Linked MCU Updates Archive for ${updatedUserJson.fullName}`,
+          userEntry.authMessageId // Linked to primary auth message!
+        );
+        archiveMessageId = uploaded.messageId;
+        archiveFileId = uploaded.fileId;
+      }
+      
+      // 5. Update index pointers
+      userEntry.archiveMessageId = archiveMessageId;
+      userEntry.archiveFileId = archiveFileId;
+      userEntry.archiveLastUpdated = Date.now();
+      
+      // 6. Clear buffer
+      updatedUserJson.updatesBuffer = [];
+      archiveUpdated = true;
+      console.log(`[Archiving] Successfully archived updates for ${userId}. Archive entries count: ${archivedUpdates.length}.`);
+    } catch (archiveErr) {
+      console.error(`[Archiving] Critical error flushing updates buffer for user ${userId}:`, archiveErr);
+    }
+  }
+
   // Check which specific documents actually changed
   // Auth document contains user profile metadata AND sessions
   const authChanged = 
@@ -1462,7 +1573,8 @@ export async function updateUserFileAndIndex(
     JSON.stringify(oldUserJson.watchData) !== JSON.stringify(updatedUserJson.watchData) ||
     JSON.stringify(oldUserJson.unlockedAchievements) !== JSON.stringify(updatedUserJson.unlockedAchievements) ||
     JSON.stringify(oldUserJson.preferences) !== JSON.stringify(updatedUserJson.preferences) ||
-    JSON.stringify(oldUserJson.updates) !== JSON.stringify(updatedUserJson.updates);
+    JSON.stringify(oldUserJson.updates) !== JSON.stringify(updatedUserJson.updates) ||
+    JSON.stringify(oldUserJson.updatesBuffer) !== JSON.stringify(updatedUserJson.updatesBuffer);
 
   const updatePromises: Promise<any>[] = [];
 
@@ -1506,6 +1618,8 @@ export async function updateUserFileAndIndex(
       unlockedAchievements: updatedUserJson.unlockedAchievements || [],
       preferences: updatedUserJson.preferences || {},
       updates: updatedUserJson.updates || [],
+      updatesBuffer: updatedUserJson.updatesBuffer || [],
+      totalLogCount: updatedUserJson.totalLogCount || (updatedUserJson.updates?.length || 0) + (updatedUserJson.updatesBuffer?.length || 0),
     };
     const progressBuf = Buffer.from(encode(progressDoc));
     const progressFileName = `user_${safeName}_progress.msgpack`;
@@ -1558,13 +1672,14 @@ export async function updateUserFileAndIndex(
   }
 
   // Execute updates in parallel
-  if (updatePromises.length > 0) {
+  if (updatePromises.length > 0 || archiveUpdated) {
     await Promise.all(updatePromises);
 
     userEntry.fullName = updatedUserJson.fullName || userEntry.fullName;
     userEntry.username = updatedUserJson.username || userEntry.username;
     userEntry.avatarFileId = updatedUserJson.avatarFileId;
     userEntry.avatarMessageId = updatedUserJson.avatarMessageId;
+    userEntry.totalLogCount = updatedUserJson.totalLogCount || (updatedUserJson.updates?.length || 0) + (updatedUserJson.updatesBuffer?.length || 0);
     if (updatedUserJson.avatarFileId) {
       userEntry.avatarLastUpdated = updatedUserJson.lastUpdated || Date.now();
     } else {
@@ -1573,7 +1688,7 @@ export async function updateUserFileAndIndex(
     if (authChanged) {
       userEntry.authLastUpdated = Date.now();
     }
-    if (progressChanged) {
+    if (progressChanged || archiveUpdated) {
       userEntry.progressLastUpdated = Date.now();
     }
     index.lastUpdated = Date.now();
@@ -1692,6 +1807,28 @@ export async function updateTelegramBinaryFile(
     messageId: data.result.message_id,
     fileId: data.result.document.file_id,
   };
+}
+
+// Fetch user's archived updates from private Telegram Storage
+export async function fetchUserArchive(
+  token: string,
+  chatId: string,
+  userId: string
+): Promise<UpdateLog[]> {
+  const { index } = await fetchUserIndex(token, chatId, false, { userId });
+  const userEntry = index.users.find(u => u.userId === userId);
+  if (!userEntry || !userEntry.archiveFileId) {
+    return [];
+  }
+  try {
+    const path = await getTelegramFilePath(token, userEntry.archiveFileId);
+    const buf = await downloadTelegramFileBinary(token, path);
+    const archiveDoc = decode(buf) as { userId: string; updates: UpdateLog[] };
+    return archiveDoc?.updates || [];
+  } catch (err) {
+    console.error(`Failed to fetch archive for ${userId}:`, err);
+    return [];
+  }
 }
 
 

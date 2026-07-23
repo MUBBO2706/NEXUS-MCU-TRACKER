@@ -611,72 +611,12 @@ export async function getCharacterImage(characterId: string): Promise<ImageRespo
   }
 }
 
-// Maps characterId or a source URL to its corresponding Telegram channel filename
-export function getCharacterFilename(characterId?: string, url?: string): string | null {
+// Maps characterId to its corresponding Telegram channel filename
+export function getCharacterFilename(characterId?: string): string | null {
   if (characterId) {
     const normalized = characterId.toLowerCase().trim();
     for (const filename of CHARACTER_FILENAMES) {
       if (filename.replace(".jpg", "") === normalized) {
-        return filename;
-      }
-    }
-  }
-
-  if (url) {
-    const lowerUrl = url.toLowerCase();
-    
-    // Direct checks for exact matches of character names in URL
-    for (const filename of CHARACTER_FILENAMES) {
-      const charName = filename.replace(".jpg", "");
-      if (lowerUrl.includes("/" + charName + ".") || lowerUrl.includes("_" + charName + ".") || lowerUrl.endsWith(charName + ".jpg")) {
-        return filename;
-      }
-    }
-
-    // Secondary sub-string check
-    for (const filename of CHARACTER_FILENAMES) {
-      const charName = filename.replace(".jpg", "");
-      if (lowerUrl.includes(charName)) {
-        return filename;
-      }
-    }
-
-    // Alternative Wikipedia and Unsplash name mappings to canonical characters
-    const altMap: Record<string, string> = {
-      "robertdowneyjr": "ironman.jpg",
-      "robert_downey": "ironman.jpg",
-      "chris_evans": "captainamerica.jpg",
-      "steve_rogers": "captainamerica.jpg",
-      "chris_hemsworth": "thor.jpg",
-      "tom_hiddleston": "loki.jpg",
-      "elizabeth_olsen": "wanda.jpg",
-      "elizabetholsen": "wanda.jpg",
-      "wanda_maximoff": "wanda.jpg",
-      "tom_holland": "spiderman.jpg",
-      "spider-man": "spiderman.jpg",
-      "scarlett_johansson": "blackwidow.jpg",
-      "scarlet_johansson": "blackwidow.jpg",
-      "mark_ruffalo": "hulk.jpg",
-      "bruce_banner": "hulk.jpg",
-      "jeremy_renner": "hawkeye.jpg",
-      "clint_barton": "hawkeye.jpg",
-      "chris_pratt": "starlord.jpg",
-      "star-lord": "starlord.jpg",
-      "benedict_cumberbatch": "doctorstrange.jpg",
-      "doctor_strange": "doctorstrange.jpg",
-      "stephen_strange": "doctorstrange.jpg",
-      "chadwick_boseman": "blackpanther.jpg",
-      "black_panther": "blackpanther.jpg",
-      "brie_larson": "captainmarvel.jpg",
-      "captain_marvel": "captainmarvel.jpg",
-      "paul_rudd": "antman.jpg",
-      "ant-man": "antman.jpg",
-      "josh_brolin": "thanos.jpg",
-      "thanos": "thanos.jpg"
-    };
-
-    for (const [key, filename] of Object.entries(altMap)) {
-      if (lowerUrl.includes(key)) {
         return filename;
       }
     }

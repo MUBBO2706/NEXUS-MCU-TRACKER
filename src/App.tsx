@@ -214,6 +214,31 @@ export default function App() {
     initAuth();
   }, [authToken]);
 
+  const handleRefreshProfile = async () => {
+    if (!authToken) return;
+    try {
+      const verifyRes = await fetch('/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        }
+      });
+      if (verifyRes.ok) {
+        const verifyData = await verifyRes.json();
+        if (verifyData.success && verifyData.user) {
+          setUser(verifyData.user);
+          if (verifyData.user.watchData) {
+            setWatchData(verifyData.user.watchData);
+          }
+          if (verifyData.user.unlockedAchievements) {
+            setUnlockedAchievements(verifyData.user.unlockedAchievements);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to refresh profile:', err);
+    }
+  };
+
   const handleLogoutQuietly = () => {
     localStorage.removeItem('mcu_auth_token');
     setAuthToken(null);
@@ -1903,6 +1928,7 @@ export default function App() {
                   onTerminateOtherSessions={handleTerminateOtherSessions}
                   onDeleteSession={handleDeleteSession}
                   onDeleteInactiveSessions={handleDeleteInactiveSessions}
+                  onRefreshProfile={handleRefreshProfile}
                 />
               )}
 
