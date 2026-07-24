@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { MCU_TITLES, MCU_QUOTES, MCU_TRIVIA } from './data/mcuData';
-import { UserWatchData, McuTitle } from './types';
+import { UserWatchData, McuTitle, ThemeType, ThemeMode } from './types';
 import { DetailModal } from './components/DetailModal';
 import { AuthGateway } from './components/AuthGateway';
 import {
@@ -28,7 +28,9 @@ import {
   Eye,
   EyeOff,
   Settings,
-  ArrowLeft
+  ArrowLeft,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 // Import Feature Tab Components
@@ -616,7 +618,25 @@ export default function App() {
   const [sortBy, setSortBy] = useState<'release' | 'timeline' | 'rating'>('release');
 
   // Profile preferences
-  const [activeTheme, setActiveTheme] = useState<'oled' | 'cosmic' | 'asgardian' | 'wakanda' | 'stark' | 'hydra'>('oled');
+  const [activeTheme, setActiveTheme] = useState<ThemeType>(() => {
+    try {
+      const saved = localStorage.getItem('mcu_active_theme');
+      return (saved as ThemeType) || 'oled';
+    } catch (e) {
+      return 'oled';
+    }
+  });
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+    try {
+      const savedMode = localStorage.getItem('mcu_theme_mode');
+      if (savedMode === 'light' || savedMode === 'dark') return savedMode;
+      const savedTheme = localStorage.getItem('mcu_active_theme');
+      if (savedTheme && savedTheme.startsWith('light-')) return 'light';
+    } catch (e) {
+      // default
+    }
+    return 'dark';
+  });
   const [favoritePhase, setFavoritePhase] = useState('');
   const [favoriteCharacter, setFavoriteCharacter] = useState('');
   const [orderingMode, setOrderingMode] = useState<'theatrical' | 'chronological'>('theatrical');
@@ -660,6 +680,28 @@ export default function App() {
 
   // Body scroll lock hook for custom modals
   useBodyScrollLock(showResetPasswordModal || showDeleteAccountModal);
+
+  // Theme class DOM effect & persistence
+  useEffect(() => {
+    const isLight = themeMode === 'light' || activeTheme.startsWith('light-');
+    if (isLight) {
+      document.documentElement.classList.add('theme-light', 'light');
+      document.documentElement.classList.remove('dark');
+      document.body.classList.add('theme-light', 'light');
+      document.body.classList.remove('dark');
+    } else {
+      document.documentElement.classList.remove('theme-light', 'light');
+      document.documentElement.classList.add('dark');
+      document.body.classList.remove('theme-light', 'light');
+      document.body.classList.add('dark');
+    }
+    try {
+      localStorage.setItem('mcu_active_theme', activeTheme);
+      localStorage.setItem('mcu_theme_mode', themeMode);
+    } catch (e) {
+      // ignore
+    }
+  }, [activeTheme, themeMode]);
 
   // Navigation history tracking for "Back to {Previous Page Name}" feature
   const [navHistory, setNavHistory] = useState<string[]>([]);
@@ -848,20 +890,43 @@ export default function App() {
   };
 
   const updatePreference = (key: string, value: any) => {
+    let nextTheme = key === 'theme' ? value : activeTheme;
+    let nextMode = key === 'themeMode' ? value : themeMode;
+
+    if (key === 'theme') {
+      const isLightVal = String(value).startsWith('light-');
+      nextMode = isLightVal ? 'light' : 'dark';
+      setActiveTheme(value);
+      setThemeMode(nextMode);
+      if (isOfflineSandbox) {
+        logSandboxUpdate("Theme changed", activeTheme.toUpperCase(), String(value).toUpperCase(), "Theme", { key });
+      }
+    }
+
+    if (key === 'themeMode') {
+      const targetMode: ThemeMode = value;
+      nextMode = targetMode;
+      if (targetMode === 'light' && !activeTheme.startsWith('light-')) {
+        nextTheme = 'light-marvel';
+        setActiveTheme('light-marvel');
+      } else if (targetMode === 'dark' && activeTheme.startsWith('light-')) {
+        nextTheme = 'oled';
+        setActiveTheme('oled');
+      }
+      setThemeMode(targetMode);
+      if (isOfflineSandbox) {
+        logSandboxUpdate("Theme Mode changed", themeMode.toUpperCase(), targetMode.toUpperCase(), "Theme", { key });
+      }
+    }
+
     const nextPrefs = {
-      theme: key === 'theme' ? value : activeTheme,
+      theme: nextTheme,
+      themeMode: nextMode,
       favPhase: key === 'favPhase' ? value : favoritePhase,
       favChar: key === 'favChar' ? value : favoriteCharacter,
       devMode: key === 'devMode' ? value : developerMode,
       orderingMode: key === 'orderingMode' ? value : orderingMode,
     };
-
-    if (key === 'theme') {
-      setActiveTheme(value);
-      if (isOfflineSandbox) {
-        logSandboxUpdate("Theme changed", activeTheme.toUpperCase(), value.toUpperCase(), "Theme", { key });
-      }
-    }
     if (key === 'favPhase') {
       setFavoritePhase(value);
       if (isOfflineSandbox) {
@@ -1539,6 +1604,23 @@ export default function App() {
 
   // Active theme visual presets
   const getThemeClass = () => {
+    const isLight = themeMode === 'light' || activeTheme.startsWith('light-');
+    if (isLight) {
+      switch (activeTheme) {
+        case 'light-stark':
+          return 'from-slate-100 via-sky-50/50 to-slate-100 text-slate-900';
+        case 'light-asgard':
+          return 'from-amber-50/40 via-slate-50 to-amber-50/30 text-slate-900';
+        case 'light-quantum':
+          return 'from-slate-100 via-rose-50/30 to-slate-100 text-slate-900';
+        case 'light-shield':
+          return 'from-slate-50 via-slate-100 to-slate-100 text-slate-900';
+        case 'light-wakanda':
+          return 'from-purple-50/30 via-slate-50 to-purple-50/20 text-slate-900';
+        default: // light-marvel
+          return 'from-slate-100 via-slate-50 to-slate-100 text-slate-900';
+      }
+    }
     switch (activeTheme) {
       case 'cosmic':
         return 'from-purple-950 via-neutral-950 to-indigo-950 text-indigo-100';
@@ -1599,8 +1681,10 @@ export default function App() {
   // Selected Movie detail lookup
   const selectedMovie = selectedMovieId ? MCU_TITLES.find((m) => m.id === selectedMovieId) || null : null;
 
+  const isLightMode = themeMode === 'light' || activeTheme.startsWith('light-');
+
   return (
-    <div className={`min-h-screen bg-gradient-to-b ${getThemeClass()} theme-${activeTheme} flex flex-col relative overflow-x-hidden transition-all duration-500`} style={{ minHeight: '100dvh' }}>
+    <div className={`min-h-screen bg-gradient-to-b ${getThemeClass()} theme-${activeTheme} ${isLightMode ? 'theme-light light' : 'theme-dark dark'} flex flex-col relative overflow-x-hidden transition-all duration-500`} style={{ minHeight: '100dvh' }}>
       {/* S.H.I.E.L.D. Floating Logo Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-black/85 backdrop-blur-md border-b border-neutral-900 px-4 py-3 md:py-3.5 flex items-center shadow-md h-14 md:h-16">
         <div className="w-full flex items-center justify-between gap-4">
@@ -1675,6 +1759,23 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2.5 flex-shrink-0 relative">
+            {/* Quick Theme Mode Toggle Button */}
+            <button
+              onClick={() => {
+                const isLight = themeMode === 'light' || activeTheme.startsWith('light-');
+                updatePreference('themeMode', isLight ? 'dark' : 'light');
+              }}
+              className="w-9 h-9 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700 transition-all focus:outline-none flex items-center justify-center cursor-pointer shadow-sm"
+              title={`Switch to ${(themeMode === 'light' || activeTheme.startsWith('light-')) ? 'Dark' : 'Light'} Theme`}
+              aria-label="Toggle Theme Mode"
+            >
+              {(themeMode === 'light' || activeTheme.startsWith('light-')) ? (
+                <Moon className="w-4 h-4 text-marvel" />
+              ) : (
+                <Sun className="w-4 h-4 text-amber-400" />
+              )}
+            </button>
+
             {/* Profile icon with dropdown menu */}
             <div className="relative">
               <button
@@ -1943,6 +2044,7 @@ export default function App() {
               {activeTab === 'settings' && (
                 <SettingsTab
                   activeTheme={activeTheme}
+                  themeMode={themeMode}
                   updatePreference={updatePreference}
                   orderingMode={orderingMode}
                   handleExportData={handleExportData}

@@ -1,5 +1,23 @@
 export type McuType = 'movie' | 'series';
 
+export type ThemeMode = 'dark' | 'light';
+
+export type ThemePreset =
+  | 'oled'
+  | 'cosmic'
+  | 'asgardian'
+  | 'wakanda'
+  | 'stark'
+  | 'hydra'
+  | 'light-marvel'
+  | 'light-stark'
+  | 'light-asgard'
+  | 'light-quantum'
+  | 'light-shield'
+  | 'light-wakanda';
+
+export type ThemeType = ThemePreset;
+
 export interface RatingScore {
   imdb: number;
   rt: number; // Rotten Tomatoes %

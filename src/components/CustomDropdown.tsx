@@ -84,6 +84,15 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
   };
 
   const getThemeStyles = () => {
+    if (activeTheme && activeTheme.startsWith('light-')) {
+      return {
+        button: 'border-slate-300 bg-slate-50 text-slate-900 focus:border-marvel shadow-sm hover:border-slate-400',
+        dropdown: 'border-slate-200 bg-white shadow-xl text-slate-900',
+        highlight: 'bg-marvel/10 text-marvel',
+        selected: 'text-marvel font-bold',
+      };
+    }
+
     switch (activeTheme) {
       case 'cosmic':
         return {
@@ -150,7 +159,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
         onClick={() => setIsOpen((prev) => !prev)}
         className={`w-full flex items-center justify-between border rounded-xl p-2.5 ${compact ? 'text-[10px]' : 'text-xs'} text-left focus:outline-none transition-all cursor-pointer overflow-hidden ${themeStyles.button}`}
       >
-        <span className={`truncate whitespace-nowrap overflow-hidden block flex-1 mr-2 ${selectedOption ? 'text-white font-medium' : 'text-neutral-500'}`}>
+        <span className={`truncate whitespace-nowrap overflow-hidden block flex-1 mr-2 ${selectedOption ? 'text-current font-medium' : 'text-neutral-500'}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown

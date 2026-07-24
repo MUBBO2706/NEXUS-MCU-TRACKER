@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Download, Upload, Database, RotateCcw, Settings } from 'lucide-react';
+import { Download, Upload, Database, RotateCcw, Settings, Sun, Moon } from 'lucide-react';
 import { CacheProgress } from '../Profile/ProfileTab';
 import { ConfirmationModal } from '../Common/ConfirmationModal';
+import { ThemeType, ThemeMode } from '../../types';
 
 interface SettingsTabProps {
-  activeTheme: 'oled' | 'cosmic' | 'asgardian' | 'wakanda' | 'stark' | 'hydra';
+  activeTheme: ThemeType;
+  themeMode?: ThemeMode;
   updatePreference: (key: string, value: any) => void;
   orderingMode: 'theatrical' | 'chronological';
   handleExportData: () => void;
@@ -23,6 +25,7 @@ interface SettingsTabProps {
 
 export const SettingsTab: React.FC<SettingsTabProps> = ({
   activeTheme,
+  themeMode = 'dark',
   updatePreference,
   orderingMode,
   handleExportData,
@@ -89,36 +92,91 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         </div>
       </div>
 
-      {/* Theme Selector */}
-      <div className="flex flex-col gap-4 pt-6 border-t border-neutral-900/60">
-        <span className="text-xs uppercase font-bold text-neutral-400 tracking-wider font-display">
-          Theme Presets & Skins
-        </span>
-        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6 sm:w-max sm:gap-3" id="settings-theme-grid">
-          {[
-            { id: 'oled', name: 'OLED Black', color: 'bg-black border-red-500' },
-            { id: 'cosmic', name: 'Cosmic Purple', color: 'bg-indigo-950 border-purple-500' },
-            { id: 'asgardian', name: 'Asgard Gold', color: 'bg-slate-900 border-amber-500' },
-            { id: 'wakanda', name: 'Wakanda Vibranium', color: 'bg-slate-950 border-purple-600' },
-            { id: 'stark', name: 'Stark Arc', color: 'bg-neutral-900 border-sky-400' },
-            { id: 'hydra', name: 'Hydra Crimson', color: 'bg-stone-900 border-red-600' },
-          ].map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => {
-                updatePreference('theme', t.id as any);
-              }}
-              className={`p-2.5 rounded-xl border text-center flex flex-col items-center justify-center gap-2 transition-all focus:outline-none min-w-0 w-full sm:w-36 h-[76px] cursor-pointer ${
-                activeTheme === t.id
-                  ? 'border-marvel bg-neutral-900 font-bold'
-                  : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
-              }`}
-            >
-              <div className={`w-4.5 h-4.5 rounded-full border flex-shrink-0 ${t.color}`} />
-              <span className="text-[10px] text-white font-sans truncate max-w-full block whitespace-nowrap select-none">{t.name}</span>
-            </button>
-          ))}
+      {/* Theme Mode & Presets Selector */}
+      <div className="flex flex-col gap-4 pt-6 border-t border-neutral-900/60" id="settings-theme-section">
+        <div className="flex flex-col gap-1">
+          <span className="text-xs uppercase font-bold text-neutral-400 tracking-wider font-display">
+            Theme Presets &amp; Skins
+          </span>
+          <p className="text-[10px] text-neutral-400 leading-relaxed text-left">
+            Switch between S.H.I.E.L.D. Dark and Light tactical interfaces or choose from custom Marvel hero visual presets.
+          </p>
+        </div>
+
+        {/* Primary Dark / Light Mode Switch */}
+        <div className="flex items-center gap-3 w-full sm:w-max">
+          <button
+            type="button"
+            onClick={() => {
+              updatePreference('themeMode', 'dark');
+            }}
+            className={`flex-1 sm:w-44 py-2.5 px-4 rounded-xl border flex items-center justify-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
+              themeMode === 'dark'
+                ? 'border-marvel bg-marvel/10 text-white font-bold shadow-md'
+                : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:border-neutral-700'
+            }`}
+          >
+            <Moon className="w-4 h-4 text-marvel" />
+            <span>Dark Theme</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              updatePreference('themeMode', 'light');
+            }}
+            className={`flex-1 sm:w-44 py-2.5 px-4 rounded-xl border flex items-center justify-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
+              themeMode === 'light'
+                ? 'border-marvel bg-marvel/10 text-white font-bold shadow-md'
+                : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:border-neutral-700'
+            }`}
+          >
+            <Sun className="w-4 h-4 text-amber-500" />
+            <span>Light Theme</span>
+          </button>
+        </div>
+
+        {/* Theme Skins Grid */}
+        <div className="flex flex-col gap-2 mt-2">
+          <span className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">
+            {themeMode === 'light' ? 'Light Theme Presets' : 'Dark Theme Presets'}
+          </span>
+          <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6 sm:w-max sm:gap-3" id="settings-theme-grid">
+            {(themeMode === 'light'
+              ? [
+                  { id: 'light-marvel', name: 'Marvel Light', color: 'bg-slate-100 border-red-500' },
+                  { id: 'light-stark', name: 'Stark Silver', color: 'bg-sky-50 border-sky-500' },
+                  { id: 'light-asgard', name: 'Asgard Light', color: 'bg-amber-50 border-amber-500' },
+                  { id: 'light-quantum', name: 'Quantum Crimson', color: 'bg-rose-50 border-red-600' },
+                  { id: 'light-shield', name: 'Shield White', color: 'bg-slate-200 border-slate-600' },
+                  { id: 'light-wakanda', name: 'Wakanda Snow', color: 'bg-purple-50 border-purple-500' },
+                ]
+              : [
+                  { id: 'oled', name: 'OLED Black', color: 'bg-black border-red-500' },
+                  { id: 'cosmic', name: 'Cosmic Purple', color: 'bg-indigo-950 border-purple-500' },
+                  { id: 'asgardian', name: 'Asgard Gold', color: 'bg-slate-900 border-amber-500' },
+                  { id: 'wakanda', name: 'Wakanda Vibranium', color: 'bg-slate-950 border-purple-600' },
+                  { id: 'stark', name: 'Stark Arc', color: 'bg-neutral-900 border-sky-400' },
+                  { id: 'hydra', name: 'Hydra Crimson', color: 'bg-stone-900 border-red-600' },
+                ]
+            ).map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => {
+                  updatePreference('theme', t.id as any);
+                }}
+                className={`p-2.5 rounded-xl border text-center flex flex-col items-center justify-center gap-2 transition-all focus:outline-none min-w-0 w-full sm:w-36 h-[76px] cursor-pointer ${
+                  activeTheme === t.id
+                    ? 'border-marvel bg-neutral-900 font-bold shadow-sm'
+                    : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
+                }`}
+              >
+                <div className={`w-4.5 h-4.5 rounded-full border flex-shrink-0 ${t.color}`} />
+                <span className="text-[10px] text-white font-sans truncate max-w-full block whitespace-nowrap select-none">{t.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
