@@ -46,6 +46,7 @@ import { ConfirmationModal } from './components/Common/ConfirmationModal';
 import { formatToIndianDateTime } from './utils/date';
 import { triggerConfettiParticles } from './utils/confetti';
 import { useCountdown } from './hooks/useCountdown';
+import { useBodyScrollLock } from './hooks/useBodyScrollLock';
 
 export default function App() {
   // Session Registry Page States
@@ -657,6 +658,9 @@ export default function App() {
   // Countdown hook
   const countdownString = useCountdown('2027-05-07T00:00:00');
 
+  // Body scroll lock hook for custom modals
+  useBodyScrollLock(showResetPasswordModal || showDeleteAccountModal);
+
   // Navigation history tracking for "Back to {Previous Page Name}" feature
   const [navHistory, setNavHistory] = useState<string[]>([]);
 
@@ -897,6 +901,9 @@ export default function App() {
 
     const handleScroll = () => {
       if (isTracking) return;
+      if (document.body.style.position === 'fixed' || document.body.style.overflow === 'hidden') {
+        return;
+      }
       isTracking = true;
 
       window.requestAnimationFrame(() => {
@@ -2044,7 +2051,7 @@ export default function App() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.15 }}
-              className="bg-neutral-950 border border-neutral-850 max-w-md w-full rounded-2xl p-6 shadow-2xl text-left relative"
+              className="bg-neutral-950 border border-neutral-850 max-w-md w-full rounded-2xl p-6 shadow-2xl text-left relative max-h-[calc(100vh-2rem)] overflow-y-auto scrollable-modal-content"
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-display font-bold text-base sm:text-lg text-white flex items-center gap-2">
@@ -2152,7 +2159,7 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-neutral-950 border border-neutral-850 rounded-2xl p-6 w-full max-w-md shadow-2xl flex flex-col gap-4 relative text-left"
+              className="bg-neutral-950 border border-neutral-850 rounded-2xl p-6 w-full max-w-md shadow-2xl flex flex-col gap-4 relative text-left max-h-[calc(100vh-2rem)] overflow-y-auto scrollable-modal-content"
             >
               <div className="flex items-center justify-between border-b border-neutral-900 pb-3">
                 <h3 className="font-display font-bold text-sm uppercase tracking-wider text-rose-500 flex items-center gap-2">

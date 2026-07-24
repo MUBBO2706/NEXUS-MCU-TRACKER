@@ -27,15 +27,20 @@
   color: #ffffff !important;
 }
 
-/* Custom CSS Scrollbar */
-::-webkit-scrollbar {
+/* Custom CSS Scrollbar - Cross-Browser Marvel Red theme */
+html, body, * {
+  scrollbar-width: thin;
+  scrollbar-color: #e62429 #000000;
+}
+
+*::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
-::-webkit-scrollbar-track {
-  background: #000;
+*::-webkit-scrollbar-track {
+  background: #000000;
 }
-::-webkit-scrollbar-thumb {
+*::-webkit-scrollbar-thumb {
   background: #e62429;
   border-radius: 4px;
 }

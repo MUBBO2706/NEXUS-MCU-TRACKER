@@ -4,6 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Google AI Studio App</title>
+    <style>
+      /* Bulletproof custom scrollbar styles that survive any bundler tree-shaking/minification in production */
+      html, body, * {
+        scrollbar-width: thin !important;
+        scrollbar-color: #e62429 #000000 !important;
+      }
+      *::-webkit-scrollbar {
+        width: 5px !important;
+        height: 5px !important;
+      }
+      *::-webkit-scrollbar-track {
+        background: #000000 !important;
+      }
+      *::-webkit-scrollbar-thumb {
+        background: #e62429 !important;
+        border-radius: 4px !important;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

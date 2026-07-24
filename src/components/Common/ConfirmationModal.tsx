@@ -1,4 +1,5 @@
 import React from 'react';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -25,6 +26,8 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   activeTheme = 'oled',
   critical = false,
 }) => {
+  useBodyScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   const getConfirmBtnStyle = () => {
@@ -49,7 +52,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn" id="shared-confirmation-modal-backdrop">
-      <div className="bg-neutral-950 border border-neutral-850 max-w-md w-full rounded-2xl p-6 shadow-2xl animate-scaleUp text-left" id="shared-confirmation-modal-content">
+      <div className="bg-neutral-950 border border-neutral-850 max-w-md w-full rounded-2xl p-6 shadow-2xl animate-scaleUp text-left max-h-[calc(100vh-2rem)] overflow-y-auto scrollable-modal-content" id="shared-confirmation-modal-content">
         <h3 className="font-display font-bold text-base sm:text-lg text-white mb-2">
           {title}
         </h3>
