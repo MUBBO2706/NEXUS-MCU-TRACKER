@@ -300,6 +300,8 @@ app.get("/api/auth/status", (req, res) => {
           preferences: userJson.preferences,
           avatarUrl: (userJson.avatarFileId || userJson.avatarUrl) ? `/api/user/avatar?userId=${userId}&v=${userJson.lastUpdated || userJson.createdAt}` : "",
           updates: userJson.updates || [],
+          totalLogCount: userJson.totalLogCount || (userJson.updates?.length || 0),
+          archiveFileId: userJson.archiveFileId || undefined,
         },
       });
     } catch (err: any) {
@@ -392,6 +394,8 @@ app.get("/api/auth/status", (req, res) => {
           preferences: userJson.preferences || {},
           avatarUrl: (userEntry.avatarFileId || userJson.avatarFileId || userJson.avatarUrl) ? `/api/user/avatar?userId=${userEntry.userId}&v=${userJson.lastUpdated || userJson.createdAt}` : "",
           updates: userJson.updates || [],
+          totalLogCount: userJson.totalLogCount || userEntry.totalLogCount || (userJson.updates?.length || 0),
+          archiveFileId: userEntry.archiveFileId || userJson.archiveFileId || undefined,
         },
       });
     } catch (err: any) {
@@ -445,6 +449,8 @@ app.get("/api/auth/status", (req, res) => {
           preferences: userFile.preferences || {},
           avatarUrl: (userFile.avatarFileId || userFile.avatarUrl) ? `/api/user/avatar?userId=${userFile.userId}&v=${userFile.lastUpdated || userFile.createdAt}` : "",
           updates: userFile.updates || [],
+          totalLogCount: userFile.totalLogCount || (userFile.updates?.length || 0) + (userFile.updatesBuffer?.length || 0),
+          archiveFileId: userFile.archiveFileId || undefined,
         },
       });
     } catch (err: any) {
@@ -972,6 +978,8 @@ app.get("/api/auth/status", (req, res) => {
           preferences: resultUser.preferences,
           avatarUrl: (resultUser.avatarFileId || resultUser.avatarUrl) ? `/api/user/avatar?userId=${resultUser.userId}&v=${resultUser.lastUpdated || resultUser.createdAt}` : "",
           updates: resultUser.updates || [],
+          totalLogCount: resultUser.totalLogCount || (resultUser.updates?.length || 0) + (resultUser.updatesBuffer?.length || 0),
+          archiveFileId: resultUser.archiveFileId || undefined,
         }
       });
     } catch (err: any) {
@@ -1092,6 +1100,8 @@ app.get("/api/auth/status", (req, res) => {
           preferences: resultUser.preferences,
           avatarUrl: (resultUser.avatarFileId || resultUser.avatarUrl) ? `/api/user/avatar?userId=${resultUser.userId}&v=${resultUser.lastUpdated || resultUser.createdAt}` : "",
           updates: resultUser.updates || [],
+          totalLogCount: resultUser.totalLogCount || (resultUser.updates?.length || 0) + (resultUser.updatesBuffer?.length || 0),
+          archiveFileId: resultUser.archiveFileId || undefined,
         }
       });
     } catch (err: any) {

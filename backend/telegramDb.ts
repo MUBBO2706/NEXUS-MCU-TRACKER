@@ -1549,8 +1549,11 @@ export async function updateUserFileAndIndex(
       userEntry.archiveFileId = archiveFileId;
       userEntry.archiveLastUpdated = Date.now();
       
-      // 6. Clear buffer
+      // 6. Clear buffer and record exact total log count
       updatedUserJson.updatesBuffer = [];
+      updatedUserJson.totalLogCount = (updatedUserJson.updates?.length || 0) + archivedUpdates.length;
+      userEntry.totalLogCount = updatedUserJson.totalLogCount;
+      updatedUserJson.archiveFileId = archiveFileId;
       archiveUpdated = true;
       console.log(`[Archiving] Successfully archived updates for ${userId}. Archive entries count: ${archivedUpdates.length}.`);
     } catch (archiveErr) {
